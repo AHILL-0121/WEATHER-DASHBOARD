@@ -1,0 +1,101 @@
+/* Animated Sun Rays */
+.weather-bg-clear .weather-anim-bg {
+  background: none;
+}
+.weather-bg-clear .weather-anim-bg::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 30%;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, #ffe066 60%, transparent 70%);
+  transform: translate(-50%, -50%);
+  opacity: 0.7;
+  z-index: 1;
+  animation: sunPulse 3s infinite alternate;
+}
+@keyframes sunPulse {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Animated Clouds */
+.weather-bg-clouds .weather-anim-bg {
+  background: none;
+}
+.weather-bg-clouds .weather-anim-bg::before,
+.weather-bg-clouds .weather-anim-bg::after {
+  content: '';
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0.5;
+  z-index: 1;
+}
+.weather-bg-clouds .weather-anim-bg::before {
+  width: 120px; height: 60px; left: 10%; top: 20%;
+  animation: cloudMove1 12s linear infinite;
+}
+.weather-bg-clouds .weather-anim-bg::after {
+  width: 90px; height: 45px; left: 60%; top: 35%;
+  animation: cloudMove2 16s linear infinite;
+}
+@keyframes cloudMove1 {
+  0% { left: 10%; }
+  100% { left: 80%; }
+}
+@keyframes cloudMove2 {
+  0% { left: 60%; }
+  100% { left: 0%; }
+}
+
+/* Animated Rain */
+.weather-bg-rain .weather-anim-bg {
+  background: none;
+}
+.weather-bg-rain .weather-anim-bg::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(79,140,255,0.18) 0px, rgba(79,140,255,0.18) 2px, transparent 2px, transparent 12px
+  );
+  background-size: 4px 14px;
+  animation: rainDrop 0.7s linear infinite;
+  z-index: 1;
+  opacity: 0.7;
+}
+@keyframes rainDrop {
+  0% { background-position-y: 0; }
+  100% { background-position-y: 14px; }
+}
+
+/* Animated Snow */
+.weather-bg-snow .weather-anim-bg {
+  background: none;
+}
+.weather-bg-snow .weather-anim-bg::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.7) 0px, rgba(255,255,255,0.7) 2px, transparent 2px, transparent 18px
+  );
+  background-size: 6px 20px;
+  animation: snowFall 1.2s linear infinite;
+  z-index: 1;
+  opacity: 0.7;
+}
+@keyframes snowFall {
+  0% { background-position-y: 0; }
+  100% { background-position-y: 20px; }
+}
+
+/* Animated Fog/Mist */
+.weather-bg-mist .weather-anim-bg,
+.weather-bg-fog .weather-anim-bg {
+  background: linear-gradient(180deg, rgba(200,220,255,0.18) 0%, rgba(255,255,255,0.5) 100%);
+  opacity: 0.7;
+  z-index: 1;
+} 

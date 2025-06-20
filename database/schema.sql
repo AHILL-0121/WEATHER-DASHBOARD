@@ -1,0 +1,5 @@
+CREATE TABLE search_history (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  city_name VARCHAR(100),
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+); 
