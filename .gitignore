@@ -1,0 +1,6 @@
+# GitHub Copilot workspace config – not needed in the remote repo
+.github/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
