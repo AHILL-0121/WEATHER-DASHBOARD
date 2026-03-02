@@ -21,14 +21,17 @@ function getScene(condition) {
 
 /* -- Night helpers -- */
 function NightStars() {
-  const stars = useMemo(() => Array.from({ length: 80 }, () => ({
-    top:      `${Math.random() * 100}%`,
-    left:     `${Math.random() * 100}%`,
-    size:     `${1 + Math.random() * 2.2}px`,
-    delay:    `${Math.random() * 5}s`,
-    duration: `${2 + Math.random() * 3}s`,
-    opacity:  0.4 + Math.random() * 0.5,
-  })), []);
+  const [stars, setStars] = useState([]);
+  useEffect(() => {
+    setStars(Array.from({ length: 80 }, () => ({
+      top:      `${Math.random() * 100}%`,
+      left:     `${Math.random() * 100}%`,
+      size:     `${1 + Math.random() * 2.2}px`,
+      delay:    `${Math.random() * 5}s`,
+      duration: `${2 + Math.random() * 3}s`,
+      opacity:  0.4 + Math.random() * 0.5,
+    })));
+  }, []);
   return (
     <div className="stars-container">
       {stars.map((s, i) => (
@@ -133,13 +136,16 @@ function CloudScene() {
 }
 
 function RainScene() {
-  const drops = useMemo(() => Array.from({ length: 45 }, () => ({
-    left:     `${Math.random() * 100}%`,
-    height:   `${22 + Math.random() * 45}px`,
-    delay:    `${Math.random() * 2.5}s`,
-    duration: `${0.5 + Math.random() * 0.6}s`,
-    opacity:  0.35 + Math.random() * 0.35,
-  })), []);
+  const [drops, setDrops] = useState([]);
+  useEffect(() => {
+    setDrops(Array.from({ length: 45 }, () => ({
+      left:     `${Math.random() * 100}%`,
+      height:   `${22 + Math.random() * 45}px`,
+      delay:    `${Math.random() * 2.5}s`,
+      duration: `${0.5 + Math.random() * 0.6}s`,
+      opacity:  0.35 + Math.random() * 0.35,
+    })));
+  }, []);
   return (
     <>
       <div className="weather-svg-scene">
@@ -170,12 +176,15 @@ function RainScene() {
 }
 
 function SnowScene() {
-  const flakes = useMemo(() => Array.from({ length: 34 }, () => ({
-    left:     `${Math.random() * 100}%`,
-    size:     `${4 + Math.random() * 6}px`,
-    delay:    `${Math.random() * 7}s`,
-    duration: `${5.5 + Math.random() * 6}s`,
-  })), []);
+  const [flakes, setFlakes] = useState([]);
+  useEffect(() => {
+    setFlakes(Array.from({ length: 34 }, () => ({
+      left:     `${Math.random() * 100}%`,
+      size:     `${4 + Math.random() * 6}px`,
+      delay:    `${Math.random() * 7}s`,
+      duration: `${5.5 + Math.random() * 6}s`,
+    })));
+  }, []);
   return (
     <>
       <div className="weather-svg-scene">
@@ -202,13 +211,16 @@ function SnowScene() {
 }
 
 function ThunderstormScene() {
-  const drops = useMemo(() => Array.from({ length: 50 }, () => ({
-    left:     `${Math.random() * 100}%`,
-    height:   `${20 + Math.random() * 40}px`,
-    delay:    `${Math.random() * 2}s`,
-    duration: `${0.45 + Math.random() * 0.55}s`,
-    opacity:  0.4 + Math.random() * 0.35,
-  })), []);
+  const [drops, setDrops] = useState([]);
+  useEffect(() => {
+    setDrops(Array.from({ length: 50 }, () => ({
+      left:     `${Math.random() * 100}%`,
+      height:   `${20 + Math.random() * 40}px`,
+      delay:    `${Math.random() * 2}s`,
+      duration: `${0.45 + Math.random() * 0.55}s`,
+      opacity:  0.4 + Math.random() * 0.35,
+    })));
+  }, []);
   return (
     <>
       <div className="weather-svg-scene">

@@ -264,10 +264,7 @@ html, body {
   font-size: 1.65rem;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--text) 20%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text);
 }
 .dash-subtitle { font-size: 0.82rem; color: var(--text-muted); letter-spacing: 0.3px; margin-top: 2px; }
 
