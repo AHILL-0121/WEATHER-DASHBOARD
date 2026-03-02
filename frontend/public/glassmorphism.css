@@ -402,20 +402,17 @@ html, body {
   font-weight: 900;
   line-height: 1;
   letter-spacing: -4px;
-  background: linear-gradient(135deg, var(--text) 20%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent; /* cross-browser fallback for Firefox */
+  color: var(--text);
+  text-shadow: 0 2px 12px var(--accent-glow);
   animation: countUp 0.8s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 @keyframes countUp { from{ opacity:0; transform:scale(0.7) translateY(20px); } to{ opacity:1; transform:none; } }
 
 .hero-icon-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
-.hero-icon { width: 96px; height: 96px; filter: drop-shadow(0 4px 16px var(--accent-glow)); animation: iconFloat 4s ease-in-out infinite; }
+.hero-icon { position: relative; z-index: 1; width: 96px; height: 96px; filter: drop-shadow(0 4px 16px var(--accent-glow)); animation: iconFloat 4s ease-in-out infinite; }
 @keyframes iconFloat { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
 .hero-icon-halo {
-  position: absolute; inset: -10px; border-radius: 50%;
+  position: absolute; inset: -10px; border-radius: 50%; z-index: 0;
   background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
   animation: haloPulse 3s ease-in-out infinite;
 }
