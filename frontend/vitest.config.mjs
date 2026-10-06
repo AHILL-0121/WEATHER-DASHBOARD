@@ -6,8 +6,8 @@ export default defineConfig({
   test: {
     // Node by default; component tests opt into jsdom with a file comment
     environment: 'node',
-    setupFiles: ['./test/setup.js'],
-    include: ['**/*.test.{js,jsx}'],
+    setupFiles: ['./test/setup.ts'],
+    include: ['**/*.test.{ts,tsx}'],
     exclude: ['node_modules/**', '.next/**'],
     restoreMocks: true,
     unstubGlobals: true,

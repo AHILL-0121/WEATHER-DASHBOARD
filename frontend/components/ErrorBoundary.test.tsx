@@ -5,7 +5,7 @@ import ErrorBoundary from './ErrorBoundary';
 
 afterEach(cleanup);
 
-function Broken() {
+function Broken(): never {
   throw new Error('boom');
 }
 

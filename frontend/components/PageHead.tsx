@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import type { WeatherDTO } from '../lib/types';
 
 const SITE_NAME = 'Weather Dashboard';
 const DESCRIPTION =
@@ -7,7 +8,7 @@ const DESCRIPTION =
 const SITE_URL = process.env.SITE_URL ?? '';
 
 // Title follows the loaded weather, e.g. "12° Clouds in London · Weather Dashboard"
-export default function PageHead({ weather }) {
+export default function PageHead({ weather }: { weather: WeatherDTO | null }) {
   const title =
     weather && Number.isFinite(weather.temp)
       ? `${Math.round(weather.temp)}° ${weather.condition}${weather.city ? ` in ${weather.city}` : ''} · ${SITE_NAME}`

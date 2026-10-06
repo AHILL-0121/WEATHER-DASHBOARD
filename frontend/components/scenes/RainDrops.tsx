@@ -1,5 +1,13 @@
+export interface Drop {
+  left: string;
+  height: string;
+  delay: string;
+  duration: string;
+  opacity: number;
+}
+
 // Falling-rain layer shared by RainScene and ThunderstormScene
-export default function RainDrops({ drops }) {
+export default function RainDrops({ drops }: { drops: Drop[] }) {
   return (
     <div className="rain-container">
       {drops.map((d, i) => (

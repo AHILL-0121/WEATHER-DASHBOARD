@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 
 // Current time in ms, updated at the start of every minute. Everything that
 // depends on "now" (clock, sun arc, day/night) shares this one tick.
-export default function useNow() {
+export default function useNow(): number {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    let timer;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const schedule = () => {
       timer = setTimeout(
         () => {

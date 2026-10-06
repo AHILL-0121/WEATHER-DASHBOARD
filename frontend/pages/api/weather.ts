@@ -1,6 +1,9 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { guard, owFetch, parseLatLon, parseQuery, sendCached, sendError } from '../../lib/openweather';
+import { OwWeatherSchema } from '../../lib/owSchemas';
+import type { ApiErrorDTO, WeatherDTO } from '../../lib/types';
 
-export default async function handler(req, res) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<WeatherDTO | ApiErrorDTO>) {
   const apiKey = guard(req, res);
   if (!apiKey) return;
 
@@ -11,13 +14,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const data = await owFetch('/data/2.5/weather', { ...(coords ?? { q: city }), units: 'metric' }, apiKey);
+    const data = await owFetch(
+      '/data/2.5/weather',
+      { ...(coords ?? { q: city! }), units: 'metric' },
+      apiKey,
+      OwWeatherSchema,
+    );
+    const [current] = data.weather; // schema guarantees at least one entry
 
-    if (!data.weather?.length || !data.main || !data.coord) {
-      return res.status(502).json({ error: 'No weather data found' });
-    }
-
-    sendCached(res, {
+    sendCached<WeatherDTO>(res, {
       city: data.name,
       country: data.sys?.country,
       lat: data.coord.lat,
@@ -26,7 +31,7 @@ export default async function handler(req, res) {
       feels_like: data.main.feels_like,
       temp_min: data.main.temp_min,
       temp_max: data.main.temp_max,
-      condition: data.weather[0].main,
+      condition: current!.main,
       humidity: data.main.humidity,
       pressure: data.main.pressure,
       wind_speed: data.wind?.speed,
@@ -35,7 +40,7 @@ export default async function handler(req, res) {
       sunrise: data.sys?.sunrise,
       sunset: data.sys?.sunset,
       clouds: data.clouds?.all,
-      icon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
+      icon: `https://openweathermap.org/img/wn/${current!.icon}@2x.png`,
       timezone: data.timezone,
     });
   } catch (err) {

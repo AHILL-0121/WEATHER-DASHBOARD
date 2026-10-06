@@ -2,13 +2,14 @@ import React from 'react';
 import useNow from '../hooks/useNow';
 import { formatTime, getLocalTime, sunFraction } from '../lib/time';
 import { placeLabel } from '../lib/weatherClient';
+import type { WeatherDTO } from '../lib/types';
 
-function safe(val, unit = '') {
+function safe(val: number | string | null | undefined, unit = ''): string {
   if (val === undefined || val === null || (typeof val === 'number' && isNaN(val))) return '--';
   return `${val}${unit}`;
 }
 
-function WindCompass({ deg }) {
+function WindCompass({ deg }: { deg: number | undefined }) {
   if (deg === undefined || deg === null) return null;
   const cardinals = [
     { label: 'N', style: { top: 3, left: '50%', transform: 'translateX(-50%)' } },
@@ -37,7 +38,14 @@ function WindCompass({ deg }) {
   );
 }
 
-function SunArc({ sunrise, sunset, tzOffset, now }) {
+interface SunArcProps {
+  sunrise: number | undefined;
+  sunset: number | undefined;
+  tzOffset: number;
+  now: number;
+}
+
+function SunArc({ sunrise, sunset, tzOffset, now }: SunArcProps) {
   const pct = sunFraction(sunrise, sunset, now);
   const r = 55,
     cx = 75,
@@ -78,7 +86,13 @@ function SunArc({ sunrise, sunset, tzOffset, now }) {
   );
 }
 
-export default function WeatherDisplay({ weather, loading }) {
+export default function WeatherDisplay({
+  weather,
+  loading,
+}: {
+  weather: WeatherDTO | null;
+  loading: boolean;
+}) {
   // Re-render each minute so the clock and sun arc stay current
   const now = useNow();
 

@@ -8,7 +8,7 @@ const SUNRISE = NOON_MS / 1000 - 6 * 3600;
 const SUNSET = NOON_MS / 1000 + 6 * 3600;
 
 // "HH:MM" exactly as the app formats it, in the runner's locale (12- or 24-hour)
-const hhmm = (h, m) =>
+const hhmm = (h: number, m: number) =>
   new Date(Date.UTC(2026, 0, 1, h, m)).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
@@ -18,7 +18,7 @@ const hhmm = (h, m) =>
 // Results must not depend on the viewer's timezone (BUG-01)
 const VIEWER_ZONES = ['UTC', 'Asia/Kolkata', 'America/New_York'];
 
-let originalTz;
+let originalTz: string | undefined;
 beforeEach(() => {
   originalTz = process.env.TZ;
 });
@@ -69,7 +69,7 @@ describe('getLocalTime / formatTime', () => {
 });
 
 describe('isNightAt (BUG-07)', () => {
-  const icon = (code) => `https://openweathermap.org/img/wn/${code}@2x.png`;
+  const icon = (code: string) => `https://openweathermap.org/img/wn/${code}@2x.png`;
   const weather = { sunrise: SUNRISE, sunset: SUNSET, icon: icon('01d') };
 
   it('uses sunrise and sunset when they are valid', () => {

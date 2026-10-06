@@ -5,9 +5,10 @@ import RainScene from './RainScene';
 import SnowScene from './SnowScene';
 import ThunderstormScene from './ThunderstormScene';
 import MistScene from './MistScene';
+import type { Scene } from '../../lib/scene';
 
 // Picks the animated SVG scene for a condition; night has its own set
-export default function SceneFX({ scene, isNight }) {
+export default function SceneFX({ scene, isNight }: { scene: Scene; isNight: boolean }) {
   if (isNight) {
     switch (scene) {
       case 'clear':

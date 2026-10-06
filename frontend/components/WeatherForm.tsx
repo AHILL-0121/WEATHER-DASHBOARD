@@ -1,12 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react';
+import type { PlaceDTO } from '../lib/types';
+import type { WeatherQuery } from '../lib/weatherClient';
 
-export default function WeatherForm({ onSearch, loading, inputValue, setInputValue }) {
-  const [suggestions, setSuggestions] = useState([]);
+interface Props {
+  onSearch: (query: WeatherQuery) => void;
+  loading: boolean;
+  inputValue: string;
+  setInputValue: (value: string) => void;
+}
+
+export default function WeatherForm({ onSearch, loading, inputValue, setInputValue }: Props) {
+  const [suggestions, setSuggestions] = useState<PlaceDTO[]>([]);
   const [showSug, setShowSug] = useState(false);
   const [highlight, setHighlight] = useState(-1);
-  const [selected, setSelected] = useState(null);
-  const debounce = useRef();
-  const request = useRef(null);
+  const [selected, setSelected] = useState<PlaceDTO | null>(null);
+  const debounce = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const request = useRef<AbortController | null>(null);
 
   useEffect(
     () => () => {
@@ -18,7 +34,7 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
 
   // Each keystroke cancels the previous lookup, so an older, slower
   // response can never replace the current suggestions
-  const fetchSuggestions = async (q) => {
+  const fetchSuggestions = async (q: string) => {
     request.current?.abort();
     const query = q.trim();
     if (query.length < 2) return setSuggestions([]);
@@ -27,14 +43,14 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
     request.current = controller;
     try {
       const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { signal: controller.signal });
-      const data = res.ok ? await res.json() : [];
-      if (!controller.signal.aborted) setSuggestions(Array.isArray(data) ? data : []);
+      const data: unknown = res.ok ? await res.json() : [];
+      if (!controller.signal.aborted) setSuggestions(Array.isArray(data) ? (data as PlaceDTO[]) : []);
     } catch (err) {
-      if (err.name !== 'AbortError') setSuggestions([]);
+      if ((err as Error).name !== 'AbortError') setSuggestions([]);
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     setShowSug(true);
     setHighlight(-1);
@@ -43,23 +59,22 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
     debounce.current = setTimeout(() => fetchSuggestions(e.target.value), 280);
   };
 
-  const handleSelect = (s) => {
-    setInputValue(s.name + (s.state ? ', ' + s.state : '') + ', ' + s.country);
+  const handleSelect = (s: PlaceDTO) => {
+    setInputValue([s.name, s.state, s.country].filter(Boolean).join(', '));
     setShowSug(false);
     setSuggestions([]);
     setSelected(s);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
-    if (Number.isFinite(selected?.lat) && Number.isFinite(selected?.lon))
-      onSearch({ city: selected.name, lat: selected.lat, lon: selected.lon });
+    if (selected) onSearch({ city: selected.name, lat: selected.lat, lon: selected.lon });
     else onSearch({ city: inputValue.trim() });
     setShowSug(false);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!showSug || !suggestions.length) return;
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -79,6 +94,7 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
     if (e.key === 'Enter' && highlight >= 0) {
       e.preventDefault();
       const s = suggestions[highlight];
+      if (!s) return;
       handleSelect(s);
       onSearch({ city: s.name, lat: s.lat, lon: s.lon });
     }

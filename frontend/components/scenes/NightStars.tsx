@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type CSSProperties } from 'react';
 import { particles } from './particles';
 
 export default function NightStars() {
@@ -23,7 +23,7 @@ export default function NightStars() {
             left: s.left,
             width: s.size,
             height: s.size,
-            '--star-op': s.opacity, // read by the starTwinkle keyframes
+            ...({ '--star-op': s.opacity } as CSSProperties), // read by the starTwinkle keyframes
             animationDelay: s.delay,
             animationDuration: s.duration,
           }}

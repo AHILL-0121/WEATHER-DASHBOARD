@@ -1,6 +1,16 @@
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import React, { useState, useEffect } from 'react';
+import type { LatLngTuple } from 'leaflet';
+
+interface MarkerProps {
+  lat: number;
+  lon: number;
+  city: string;
+  condition: string;
+  temp: number | null;
+  onMapClick?: (lat: number, lon: number) => void;
+}
 
 // Light CartoDB tiles to match the light theme
 const DARK_TILE = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
@@ -22,7 +32,7 @@ const glowIcon = L.divIcon({
 });
 
 // Keeps the map centred on the selected location at the user's current zoom
-function MapController({ lat, lon }) {
+function MapController({ lat, lon }: { lat: number; lon: number }) {
   const map = useMap();
   useEffect(() => {
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
@@ -32,9 +42,9 @@ function MapController({ lat, lon }) {
   return null;
 }
 
-function ClickableMarker({ lat, lon, city, condition, temp, onMapClick }) {
-  const [position, setPosition] = useState([lat, lon]);
-  const [shown, setShown] = useState([lat, lon]);
+function ClickableMarker({ lat, lon, city, condition, temp, onMapClick }: MarkerProps) {
+  const [position, setPosition] = useState<LatLngTuple>([lat, lon]);
+  const [shown, setShown] = useState<LatLngTuple>([lat, lon]);
   const map = useMap();
 
   // Move the marker when a new result arrives (adjusting state during render,
@@ -66,7 +76,7 @@ function ClickableMarker({ lat, lon, city, condition, temp, onMapClick }) {
   );
 }
 
-export default function WeatherMap({ lat, lon, city, condition, temp, onMapClick }) {
+export default function WeatherMap({ lat, lon, city, condition, temp, onMapClick }: MarkerProps) {
   const mapLat = Number.isFinite(lat) ? lat : 20;
   const mapLon = Number.isFinite(lon) ? lon : 0;
   return (
