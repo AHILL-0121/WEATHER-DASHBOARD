@@ -36,7 +36,7 @@ const glowIcon = L.divIcon({
 function MapController({ lat, lon }) {
   const map = useMap();
   useEffect(() => {
-    if (lat && lon) {
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
       map.setView([lat, lon], 3, { animate: true, duration: 1.2 });
     }
   }, [lat, lon, map]);
@@ -74,8 +74,8 @@ function ClickableMarker({ lat, lon, city, condition, temp, onMapClick }) {
 }
 
 export default function WeatherMap({ lat, lon, city, condition, temp, onMapClick }) {
-  const mapLat = lat || 20;
-  const mapLon = lon || 0;
+  const mapLat = Number.isFinite(lat) ? lat : 20;
+  const mapLon = Number.isFinite(lon) ? lon : 0;
   return (
     <div className="glass-panel map-panel">
       <div className="map-header">

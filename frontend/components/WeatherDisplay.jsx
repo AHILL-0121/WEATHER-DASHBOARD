@@ -6,11 +6,22 @@ function formatTime(unix, tzOffset = 0) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
 }
 
+// Shift UTC "now" by the location's offset, then format as UTC so the
+// viewer's own timezone never enters the calculation
 function getLocalTime(tzOffset) {
   if (typeof tzOffset !== 'number') return '--';
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  return new Date(utc + tzOffset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(Date.now() + tzOffset * 1000)
+    .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+}
+
+// Ocean and other unnamed points come back with an empty name
+function placeLabel({ city, country, lat, lon }) {
+  const named = [city, country].filter(Boolean).join(', ');
+  if (named) return named;
+  if (Number.isFinite(lat) && Number.isFinite(lon)) {
+    return `Unnamed location · ${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
+  }
+  return 'Unnamed location';
 }
 
 function safe(val, unit = '') {
@@ -18,16 +29,13 @@ function safe(val, unit = '') {
   return `${val}${unit}`;
 }
 
-function sunFraction(sunrise, sunset, tzOffset) {
-  if (!sunrise || !sunset) return 0;
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const nowSec = utc / 1000 + tzOffset;
-  const riseSec = sunrise + tzOffset;
-  const setSec  = sunset  + tzOffset;
-  if (nowSec <= riseSec) return 0;
-  if (nowSec >= setSec)  return 1;
-  return (nowSec - riseSec) / (setSec - riseSec);
+// sunrise, sunset and Date.now() are all UTC, so no offset is needed
+function sunFraction(sunrise, sunset) {
+  if (!sunrise || !sunset || sunset <= sunrise) return 0;
+  const nowSec = Date.now() / 1000;
+  if (nowSec <= sunrise) return 0;
+  if (nowSec >= sunset)  return 1;
+  return (nowSec - sunrise) / (sunset - sunrise);
 }
 
 function WindCompass({ deg }) {
@@ -52,7 +60,7 @@ function WindCompass({ deg }) {
 }
 
 function SunArc({ sunrise, sunset, tzOffset }) {
-  const pct = sunFraction(sunrise, sunset, tzOffset);
+  const pct = sunFraction(sunrise, sunset);
   const r = 55, cx = 75, cy = 70;
   const totalLen = Math.PI * r;
   const px = cx + r * Math.cos(Math.PI - pct * Math.PI);
@@ -144,7 +152,7 @@ export default function WeatherDisplay({ weather, loading }) {
         <div className="hero-condition">{weather.condition || '--'}</div>
         <div className="hero-location">
           <i className="fas fa-location-dot" style={{ fontSize:'0.8rem' }} />
-          {weather.city || '--'}, {weather.country || '--'}
+          {placeLabel(weather)}
         </div>
         <div className="hero-time">
           <i className="fas fa-clock" style={{ fontSize:'0.8rem' }} />
