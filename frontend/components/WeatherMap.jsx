@@ -6,19 +6,7 @@ import React, { useState, useEffect } from 'react';
 const DARK_TILE  = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const DARK_ATTR  = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-// Fix default marker icon issue in Leaflet + Webpack
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
-
-// Custom glowing marker
+// Custom glowing marker (the only marker used, so Leaflet's default icon isn't configured)
 const glowIcon = L.divIcon({
   className: '',
   html: `<div style="
@@ -32,12 +20,12 @@ const glowIcon = L.divIcon({
   iconAnchor: [9, 9],
 });
 
-// Keeps map centered on the selected location without zooming in
+// Keeps the map centred on the selected location at the user's current zoom
 function MapController({ lat, lon }) {
   const map = useMap();
   useEffect(() => {
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      map.setView([lat, lon], 3, { animate: true, duration: 1.2 });
+      map.setView([lat, lon], map.getZoom(), { animate: true, duration: 1.2 });
     }
   }, [lat, lon, map]);
   return null;
@@ -55,7 +43,7 @@ function ClickableMarker({ lat, lon, city, condition, temp, onMapClick }) {
   useMapEvents({
     click(e) {
       setPosition([e.latlng.lat, e.latlng.lng]);
-      map.setView([e.latlng.lat, e.latlng.lng], 3, { animate: true, duration: 1.2 });
+      map.setView([e.latlng.lat, e.latlng.lng], map.getZoom(), { animate: true, duration: 1.2 });
       if (onMapClick) onMapClick(e.latlng.lat, e.latlng.lng);
     },
   });

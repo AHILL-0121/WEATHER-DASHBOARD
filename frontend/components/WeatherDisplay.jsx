@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useState } from 'react';
+﻿import React from 'react';
+import useNow from '../hooks/useNow';
 
 function formatTime(unix, tzOffset = 0) {
   if (!unix) return '--';
@@ -8,9 +9,9 @@ function formatTime(unix, tzOffset = 0) {
 
 // Shift UTC "now" by the location's offset, then format as UTC so the
 // viewer's own timezone never enters the calculation
-function getLocalTime(tzOffset) {
+function getLocalTime(tzOffset, nowMs) {
   if (typeof tzOffset !== 'number') return '--';
-  return new Date(Date.now() + tzOffset * 1000)
+  return new Date(nowMs + tzOffset * 1000)
     .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
 }
 
@@ -30,9 +31,9 @@ function safe(val, unit = '') {
 }
 
 // sunrise, sunset and Date.now() are all UTC, so no offset is needed
-function sunFraction(sunrise, sunset) {
+function sunFraction(sunrise, sunset, nowMs) {
   if (!sunrise || !sunset || sunset <= sunrise) return 0;
-  const nowSec = Date.now() / 1000;
+  const nowSec = nowMs / 1000;
   if (nowSec <= sunrise) return 0;
   if (nowSec >= sunset)  return 1;
   return (nowSec - sunrise) / (sunset - sunrise);
@@ -59,8 +60,8 @@ function WindCompass({ deg }) {
   );
 }
 
-function SunArc({ sunrise, sunset, tzOffset }) {
-  const pct = sunFraction(sunrise, sunset);
+function SunArc({ sunrise, sunset, tzOffset, now }) {
+  const pct = sunFraction(sunrise, sunset, now);
   const r = 55, cx = 75, cy = 70;
   const totalLen = Math.PI * r;
   const px = cx + r * Math.cos(Math.PI - pct * Math.PI);
@@ -94,15 +95,8 @@ function SunArc({ sunrise, sunset, tzOffset }) {
 }
 
 export default function WeatherDisplay({ weather, loading }) {
-  const [localTime, setLocalTime] = useState('--');
-
-  useEffect(() => {
-    if (!weather || typeof weather.timezone !== 'number') return;
-    const tick = () => setLocalTime(getLocalTime(weather.timezone));
-    tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
-  }, [weather?.timezone]);
+  // Re-render each minute so the clock and sun arc stay current
+  const now = useNow();
 
   if (loading) {
     return (
@@ -129,7 +123,7 @@ export default function WeatherDisplay({ weather, loading }) {
     { icon:'fa-wind',             label:'Wind Speed',  value: weather.wind_speed != null ? safe(weather.wind_speed,' m/s') : '--',
       extra: <WindCompass deg={weather.wind_deg} />, delay:0.64 },
     { icon:'fa-sun',              label:'Sunrise / Sunset', value: null, wide: true,
-      extra: <SunArc sunrise={weather.sunrise} sunset={weather.sunset} tzOffset={weather.timezone} />, delay:0.72 },
+      extra: <SunArc sunrise={weather.sunrise} sunset={weather.sunset} tzOffset={weather.timezone} now={now} />, delay:0.72 },
   ];
 
   return (
@@ -156,7 +150,7 @@ export default function WeatherDisplay({ weather, loading }) {
         </div>
         <div className="hero-time">
           <i className="fas fa-clock" style={{ fontSize:'0.8rem' }} />
-          Local time &mdash; <strong>{localTime}</strong>
+          Local time &mdash; <strong>{getLocalTime(weather.timezone, now)}</strong>
         </div>
       </div>
 

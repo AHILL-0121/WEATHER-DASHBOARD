@@ -295,7 +295,7 @@ html, body {
   font-size: 1rem;
   color: var(--text);
   outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition), color var(--transition);
 }
 .search-input::placeholder { color: var(--text-muted); }
 .search-input:focus {
@@ -358,7 +358,7 @@ html, body {
   display: flex; align-items: center; gap: 10px;
   transition: background var(--transition);
 }
-.suggestion-item:hover, .suggestion-item.active { background: rgba(var(--accent),0.1); color: var(--accent); }
+.suggestion-item:hover, .suggestion-item.active { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
 .suggestion-item .sug-pin  { color: var(--text-muted); font-size: 0.8rem; }
 .suggestion-item .sug-name { font-weight: 600; }
 .suggestion-item .sug-detail { font-size: 0.8rem; color: var(--text-muted); }
@@ -687,8 +687,11 @@ body.night .error-banner {
 /* ---- Night map ---- */
 body.night .leaflet-container { background: #0f172a !important; }
 
-/* ---- Night transitions – smooth switch ---- */
-body, .glass-panel, .stat-card, .search-input, .suggestions-list, .footer-link, .scene {
+/* ---- Night transitions – smooth switch ----
+   Only for elements without their own transition list; .stat-card, .footer-link,
+   .search-input and .scene declare theirs above, and repeating them here would
+   override (and lose) their transform/hover transitions. */
+body, .glass-panel, .suggestions-list {
   transition:
     background var(--transition),
     border-color var(--transition),

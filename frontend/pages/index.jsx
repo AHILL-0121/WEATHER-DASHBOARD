@@ -2,6 +2,7 @@
 import dynamic from 'next/dynamic';
 import WeatherForm from '../components/WeatherForm';
 import WeatherDisplay from '../components/WeatherDisplay';
+import useNow from '../hooks/useNow';
 
 const WeatherMap = dynamic(() => import('../components/WeatherMap'), { ssr: false });
 
@@ -20,6 +21,19 @@ function getScene(condition) {
 }
 
 /* -- Night helpers -- */
+
+// Uses the location's sunrise/sunset (UTC seconds). In polar day or night those
+// can be missing or equal, so fall back to OpenWeather's own day/night flag:
+// the icon code ends in "d" or "n" (e.g. 01n).
+function isNightAt(weather, nowMs) {
+  if (!weather) return false;
+  const { sunrise, sunset, icon } = weather;
+  if (Number.isFinite(sunrise) && Number.isFinite(sunset) && sunset > sunrise) {
+    const nowSec = nowMs / 1000;
+    return nowSec < sunrise || nowSec > sunset;
+  }
+  return /n@2x\.png$/.test(icon ?? '');
+}
 function NightStars() {
   const [stars, setStars] = useState([]);
   useEffect(() => {
@@ -38,7 +52,7 @@ function NightStars() {
         <div key={i} className="night-star" style={{
           top: s.top, left: s.left,
           width: s.size, height: s.size,
-          opacity: s.opacity,
+          '--star-op': s.opacity, // read by the starTwinkle keyframes
           animationDelay: s.delay,
           animationDuration: s.duration,
         }} />
@@ -334,12 +348,9 @@ export default function Home() {
 
   const scene = getScene(weather?.condition);
 
-  // Determine night/day using the location's sunrise/sunset (UTC unix timestamps)
-  const isNight = useMemo(() => {
-    if (!weather?.sunrise || !weather?.sunset) return false;
-    const nowUtc = Math.floor(Date.now() / 1000);
-    return nowUtc < weather.sunrise || nowUtc > weather.sunset;
-  }, [weather?.sunrise, weather?.sunset]);
+  // Re-evaluated every minute so the theme flips when the sun sets with the tab open
+  const now = useNow();
+  const isNight = useMemo(() => isNightAt(weather, now), [weather, now]);
 
   // Apply night + scene classes to <body> so CSS vars cascade to all children
   const ALL_SCENES = ['clear','clouds','rain','drizzle','snow','thunderstorm','mist','default'];
