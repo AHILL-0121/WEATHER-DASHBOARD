@@ -57,9 +57,21 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
 
   const handleKeyDown = (e) => {
     if (!showSug || !suggestions.length) return;
-    if (e.key === 'ArrowDown')  setHighlight(h => (h + 1) % suggestions.length);
-    if (e.key === 'ArrowUp')    setHighlight(h => (h - 1 + suggestions.length) % suggestions.length);
-    if (e.key === 'Enter' && highlight >= 0) { e.preventDefault(); handleSelect(suggestions[highlight]); }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setShowSug(false);
+      setHighlight(-1);
+      return;
+    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlight(h => (h + 1) % suggestions.length); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setHighlight(h => (h - 1 + suggestions.length) % suggestions.length); }
+    // Enter on a highlighted suggestion picks it and searches in one step
+    if (e.key === 'Enter' && highlight >= 0) {
+      e.preventDefault();
+      const s = suggestions[highlight];
+      handleSelect(s);
+      onSearch({ city: s.name, lat: s.lat, lon: s.lon });
+    }
   };
 
   return (
@@ -77,10 +89,10 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
               onFocus={() => setShowSug(true)}
               onBlur={() => setTimeout(() => setShowSug(false), 160)}
               onKeyDown={handleKeyDown}
-              disabled={loading}
             />
           </div>
-          <button type="submit" className="search-btn" disabled={loading || !inputValue.trim()}>
+          {/* A new search while one is loading cancels the old one, so only an empty input disables this */}
+          <button type="submit" className="search-btn" disabled={!inputValue.trim()}>
             {loading
               ? <><i className="fas fa-circle-notch fa-spin" style={{ marginRight: 6 }} />Loading</>
               : <><i className="fas fa-location-crosshairs" style={{ marginRight: 6 }} />Search</>}
