@@ -1,6 +1,11 @@
-# GitHub Copilot workspace config – not needed in the remote repo
-.github/
-
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Local planning notes (kept off the remote by choice)
+/plan
+
+# Markdown is local-only except the README and GitHub templates
+*.md
+!README.md
+!.github/**/*.md

@@ -353,12 +353,10 @@ export default function Home() {
       const data = await res.json();
       setWeather(data);
       try {
-        const gr = await fetch(
-          `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY}`
-        );
-        const gd = await gr.json();
-        if (gd?.[0]?.name) {
-          setInputValue([gd[0].name, gd[0].state, gd[0].country].filter(Boolean).join(', '));
+        const gr = await fetch(`/api/geocode/reverse?lat=${lat}&lon=${lon}`);
+        const place = gr.ok ? await gr.json() : null;
+        if (place?.name) {
+          setInputValue([place.name, place.state, place.country].filter(Boolean).join(', '));
         } else setInputValue(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
       } catch { setInputValue(`${lat.toFixed(4)}, ${lon.toFixed(4)}`); }
     } catch (err) {

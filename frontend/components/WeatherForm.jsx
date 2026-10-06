@@ -1,7 +1,5 @@
 ﻿import React, { useState, useRef } from 'react';
 
-const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || '';
-
 export default function WeatherForm({ onSearch, loading, inputValue, setInputValue }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showSug, setShowSug]         = useState(false);
@@ -12,7 +10,8 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
   const fetchSuggestions = async (q) => {
     if (!q || q.length < 2) return setSuggestions([]);
     try {
-      const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(q)}&limit=5&appid=${API_KEY}`);
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+      if (!res.ok) return setSuggestions([]);
       const data = await res.json();
       setSuggestions(Array.isArray(data) ? data : []);
     } catch { setSuggestions([]); }
