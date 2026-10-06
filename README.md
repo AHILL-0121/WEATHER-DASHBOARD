@@ -1,64 +1,70 @@
 # Weather Dashboard
 
-A serverless weather dashboard built with **Next.js**. No separate backend process required — weather data is fetched directly from the [OpenWeather API](https://openweathermap.org/api) via a Next.js serverless API route.
+![Weather Dashboard: search by city or map](docs/banner.webp)
+
+A weather dashboard built with **Next.js**. Search for a city or click anywhere on the map to see its current weather. Data comes from the [OpenWeather API](https://openweathermap.org/api) through the app's own serverless API routes, so the API key never reaches the browser.
 
 ## Features
 
-- Search weather by city name
-- Search weather by clicking anywhere on an interactive map
-- Displays temperature, feels-like, min/max, humidity, pressure, wind, visibility, clouds, sunrise/sunset
-- Animated weather backgrounds based on current conditions
-- Fully serverless — deploys to Vercel or any Node.js host with zero extra services
+- Search by city name, with suggestions as you type (arrow keys, Enter, Escape)
+- Click anywhere on the map for that point's weather, including open water
+- Temperature, feels-like, min/max, humidity, pressure, wind speed and direction, visibility, cloud cover
+- Local time and a sunrise/sunset arc, correct whatever your own timezone
+- Animated backgrounds per condition, switching to night when the sun sets at that location
+- Serverless: deploys to Vercel (or any Node.js host) with no other services
 
-## Project Structure
+## Project structure
 
 ```
 frontend/
 ├── components/
-│   ├── WeatherDisplay.jsx   # Weather data card
-│   ├── WeatherForm.jsx      # Search input
-│   └── WeatherMap.jsx       # Interactive Leaflet map
+│   ├── scenes/            # Animated background scenes (sun, rain, snow, …) and SceneFX selector
+│   ├── WeatherDisplay.jsx # Current-conditions panel
+│   ├── WeatherForm.jsx    # Search box with suggestions
+│   ├── WeatherMap.jsx     # Leaflet map
+│   ├── Header.jsx, Footer.jsx, PageHead.jsx, ErrorBoundary.jsx
+├── hooks/
+│   ├── useWeather.js      # Loads weather: cancels stale requests, caches results
+│   └── useNow.js          # Shared once-a-minute clock
+├── lib/
+│   ├── openweather.js     # Server-only: validation, rate limit, upstream calls
+│   ├── weatherClient.js   # Browser-side calls to /api, error messages, cache
+│   ├── time.js            # Timezone-safe time and sun maths
+│   └── scene.js           # Condition → background scene
 ├── pages/
-│   ├── index.jsx            # Main page
+│   ├── index.jsx          # Dashboard
+│   ├── 404.jsx
 │   └── api/
-│       └── weather.js       # Serverless function → OpenWeather API
-├── public/
-│   ├── fonts.css
-│   └── weather-anim.css
-└── .env.local               # API keys (not committed)
+│       ├── weather.js         # GET /api/weather?city= | ?lat=&lon=
+│       └── geocode/
+│           ├── index.js       # GET /api/geocode?q=        (search suggestions)
+│           └── reverse.js     # GET /api/geocode/reverse?lat=&lon=  (map-click names)
+├── styles/                # Global CSS
+├── test/                  # API tests and helpers
+└── .env.example           # Environment variables template
 ```
 
 ## Setup
 
-### 1. Install dependencies
+Requires Node.js 22 (see `frontend/.nvmrc`).
 
 ```bash
 cd frontend
 npm install
-```
-
-### 2. Configure environment variables
-
-Create `frontend/.env.local`:
-
-```env
-# Server-only: used by the /api routes, never sent to the browser
-OPENWEATHER_API_KEY=your_openweather_api_key
-```
-
-Get a free API key at <https://openweathermap.org/api>.
-
-### 3. Run
-
-```bash
+cp .env.example .env.local   # then put your OpenWeather key in .env.local
 npm run dev
 ```
 
-Open <http://localhost:3000>.
+Open <http://localhost:3000>. Get a free API key at <https://openweathermap.org/api>.
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `OPENWEATHER_API_KEY` | Yes | Used only by the `/api` routes, never sent to the browser. Don't create a `NEXT_PUBLIC_` copy. |
+| `SITE_URL` | No | Absolute URL for social-preview links. Defaults to the Vercel production domain, or `http://localhost:3000`. |
 
 ## Development
 
-Run these from `frontend/` (Node 22, see `.nvmrc`):
+Run these from `frontend/`:
 
 | Command | What it does |
 |---|---|
@@ -71,19 +77,20 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, tests, build and `npm a
 
 ## Deployment (Vercel)
 
-```bash
-cd frontend
-npx vercel
-```
-
-Set `OPENWEATHER_API_KEY` in the Vercel project environment variables. Do not create a `NEXT_PUBLIC_` copy of it.
+1. Import the repository in Vercel and set the **Root Directory** to `frontend`.
+2. Add `OPENWEATHER_API_KEY` under Project → Settings → Environment Variables.
+3. Deploy. Every pull request gets its own preview URL.
 
 ## How it works
 
 ```
 Browser
-  └─ GET /api/weather?city=London
-       └─ pages/api/weather.js  (Next.js serverless function)
-            └─ GET api.openweathermap.org/data/2.5/weather
-                 └─ returns normalized JSON to the browser
+  ├─ GET /api/weather?city=London          ─┐
+  ├─ GET /api/geocode?q=Lon                 ├─ Next.js API routes (validate input, rate-limit,
+  └─ GET /api/geocode/reverse?lat=&lon=    ─┘   add the API key, cache for 5 min)
+                                                   └─ api.openweathermap.org
 ```
+
+## License
+
+[MIT](LICENSE) © 2026 AHILL

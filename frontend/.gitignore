@@ -6,10 +6,10 @@ node_modules/
 out/
 
 # environment variables – contain secrets, NEVER commit
+# (.env.example holds placeholders only and IS committed)
 .env.local
 .env*.local
 .env
-.env.local.example
 
 # OS / editor artifacts
 .DS_Store

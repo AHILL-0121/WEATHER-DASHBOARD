@@ -2,5 +2,6 @@
 out/
 coverage/
 package-lock.json
-# Legacy styles and assets, replaced wholesale by the redesign (Phase 8)
 public/
+# Legacy styles, replaced wholesale by the redesign (Phase 8)
+styles/

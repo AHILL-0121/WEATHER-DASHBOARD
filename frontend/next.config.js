@@ -25,10 +25,19 @@ const securityHeaders = [
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
 ];
 
+// Absolute site URL for social-preview tags. Set SITE_URL explicitly, or let
+// Vercel supply the production domain; falls back to localhost in development.
+const siteUrl =
+  process.env.SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : 'http://localhost:3000');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  env: { SITE_URL: siteUrl.replace(/\/$/, '') },
 
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];

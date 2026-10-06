@@ -5,9 +5,6 @@
 /* ---------- CSS Custom Properties (overridden per scene) ---------- */
 :root {
   /* defaults (clear / sunny) */
-  --scene-from:   #fff7e6;
-  --scene-via:    #bae6fd;
-  --scene-to:     #e0f2fe;
   --accent:       #f59e0b;
   --accent2:      #38bdf8;
   --accent-glow:  rgba(245,158,11,0.25);
@@ -17,20 +14,19 @@
   --glass-blur:   blur(20px);
   --text:         #1e293b;
   --text-muted:   #64748b;
-  --card-bg:      rgba(255,255,255,0.60);
   --radius:       22px;
   --transition:   0.38s cubic-bezier(0.4,0,0.2,1);
 }
 
 /* ---------- Scene overrides (on both .scene div AND body so vars cascade to all children) ---------- */
-body.scene-clear,        .scene-clear        { --scene-from:#fff7e6; --scene-via:#fde68a; --scene-to:#bae6fd;  --accent:#f59e0b; --accent2:#38bdf8; --accent-glow:rgba(245,158,11,0.28); }
-body.scene-clouds,       .scene-clouds       { --scene-from:#e0e7ef; --scene-via:#cbd5e1; --scene-to:#e2e8f0;  --accent:#94a3b8; --accent2:#60a5fa; --accent-glow:rgba(148,163,184,0.28); }
-body.scene-rain,         .scene-rain         { --scene-from:#dbeafe; --scene-via:#93c5fd; --scene-to:#bfdbfe;  --accent:#3b82f6; --accent2:#0ea5e9; --accent-glow:rgba(59,130,246,0.28); }
-body.scene-drizzle,      .scene-drizzle      { --scene-from:#e0f2fe; --scene-via:#bae6fd; --scene-to:#ddd6fe;  --accent:#0ea5e9; --accent2:#818cf8; --accent-glow:rgba(14,165,233,0.25); }
-body.scene-snow,         .scene-snow         { --scene-from:#f0f9ff; --scene-via:#e0f2fe; --scene-to:#f8fafc;  --accent:#7dd3fc; --accent2:#a5f3fc; --accent-glow:rgba(125,211,252,0.30); }
-body.scene-thunderstorm, .scene-thunderstorm { --scene-from:#ddd6fe; --scene-via:#c4b5fd; --scene-to:#818cf8;  --accent:#7c3aed; --accent2:#fbbf24; --accent-glow:rgba(124,58,237,0.30); }
-body.scene-mist,         .scene-mist         { --scene-from:#f1f5f9; --scene-via:#e2e8f0; --scene-to:#f8fafc;  --accent:#94a3b8; --accent2:#64748b; --accent-glow:rgba(100,116,139,0.20); }
-body.scene-default,      .scene-default      { --scene-from:#eff6ff; --scene-via:#dbeafe; --scene-to:#bfdbfe;  --accent:#3b82f6; --accent2:#818cf8; --accent-glow:rgba(59,130,246,0.25); }
+body.scene-clear,        .scene-clear        { --accent:#f59e0b; --accent2:#38bdf8; --accent-glow:rgba(245,158,11,0.28); }
+body.scene-clouds,       .scene-clouds       { --accent:#94a3b8; --accent2:#60a5fa; --accent-glow:rgba(148,163,184,0.28); }
+body.scene-rain,         .scene-rain         { --accent:#3b82f6; --accent2:#0ea5e9; --accent-glow:rgba(59,130,246,0.28); }
+body.scene-drizzle,      .scene-drizzle      { --accent:#0ea5e9; --accent2:#818cf8; --accent-glow:rgba(14,165,233,0.25); }
+body.scene-snow,         .scene-snow         { --accent:#7dd3fc; --accent2:#a5f3fc; --accent-glow:rgba(125,211,252,0.30); }
+body.scene-thunderstorm, .scene-thunderstorm { --accent:#7c3aed; --accent2:#fbbf24; --accent-glow:rgba(124,58,237,0.30); }
+body.scene-mist,         .scene-mist         { --accent:#94a3b8; --accent2:#64748b; --accent-glow:rgba(100,116,139,0.20); }
+body.scene-default,      .scene-default      { --accent:#3b82f6; --accent2:#818cf8; --accent-glow:rgba(59,130,246,0.25); }
 
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -104,9 +100,7 @@ html, body {
 
 /* Sun */
 @keyframes sunRotate { to { transform: rotate(360deg); } }
-@keyframes sunPulse  { 0%,100%{ r:52; opacity:0.18; } 50%{ r:66; opacity:0.32; } }
 @keyframes sunGlowPulse { 0%,100%{ opacity:0.5; transform:scale(1); } 50%{ opacity:0.9; transform:scale(1.12); } }
-@keyframes rayStretch { 0%,100%{ transform: scaleY(1); } 50%{ transform: scaleY(1.3); } }
 
 /* Cloud drift */
 @keyframes cloudDrift1 { 0%,100%{ transform:translateX(0); } 50%{ transform:translateX(-60px); } }
@@ -115,23 +109,8 @@ html, body {
 @keyframes cloudBob    { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
 
 /* Rain drops */
-@keyframes svgRainFall {
-  0%   { transform:translateY(-40px); opacity:0; }
-  8%   { opacity:0.8; }
-  90%  { opacity:0.7; }
-  100% { transform:translateY(110vh); opacity:0; }
-}
 
 /* Snow */
-@keyframes svgSnowFall {
-  0%   { transform:translateY(-20px) rotate(0deg); opacity:0; }
-  6%   { opacity:1; }
-  94%  { opacity:0.8; }
-  100% { transform:translateY(110vh) rotate(360deg); opacity:0; }
-}
-@keyframes svgSnowSway {
-  0%,100%{ margin-left:0; } 50%{ margin-left:40px; }
-}
 
 /* Lightning bolt */
 @keyframes boltFlash {
@@ -141,16 +120,8 @@ html, body {
   94%          { opacity:0.7; }
   96%          { opacity:0; }
 }
-@keyframes boltGlow  {
-  0%,88%,100% { filter:none; }
-  90%,94%     { filter:drop-shadow(0 0 18px #fbbf24); }
-}
 
 /* Mist */
-@keyframes mistFloat {
-  0%,100%{ transform:translateX(0)   scaleX(1);     opacity:0.55; }
-  50%    { transform:translateX(60px) scaleX(1.08);  opacity:0.75; }
-}
 
 /* ---------- Rain particle container ---------- */
 .rain-container { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
@@ -579,7 +550,6 @@ body.night {
   --glass-shadow: 0 8px 40px rgba(0,0,0,0.45);
   --text:         #e2e8f0;
   --text-muted:   #94a3b8;
-  --card-bg:      rgba(10,18,40,0.52);
 }
 
 /* ---- Night scene backgrounds ---- */

@@ -1,5 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
-import { errorMessage, fetchPlace, placeLabel } from './weatherClient';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { clearCache, errorMessage, fetchPlace, getWeather, placeLabel } from './weatherClient';
+
+beforeEach(clearCache);
 
 const response = (status, body) => new Response(body === undefined ? '' : JSON.stringify(body), { status });
 
@@ -47,5 +49,48 @@ describe('placeLabel (BUG-06)', () => {
 
   it('labels unnamed points with coordinates, including 0', () => {
     expect(placeLabel({ city: '', lat: 0, lon: -30.5 })).toBe('Unnamed location · 0.00°, -30.50°');
+  });
+});
+
+describe('getWeather', () => {
+  it('requests by coordinates when valid, otherwise by city', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => response(200, { city: 'X' })),
+    );
+    await getWeather({ city: 'Paris', lat: 0, lon: 0 });
+    await getWeather({ city: 'Paris' });
+    expect(fetch.mock.calls.map((c) => c[0])).toEqual([
+      '/api/weather?lat=0&lon=0',
+      '/api/weather?city=Paris',
+    ]);
+  });
+
+  it('reuses a successful result for 5 minutes', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => response(200, { city: 'Paris' })),
+      );
+      await getWeather({ city: 'Paris' });
+      await getWeather({ city: 'Paris' });
+      expect(fetch).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(5 * 60_000 + 1);
+      await getWeather({ city: 'Paris' });
+      expect(fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not cache failures, and throws a readable message', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => response(404)),
+    );
+    await expect(getWeather({ city: 'Atlantis' })).rejects.toThrow('No place called "Atlantis" was found.');
+    await expect(getWeather({ city: 'Atlantis' })).rejects.toThrow();
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });
