@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       apiKey,
     );
 
-    if (!data.weather || data.weather.length === 0) {
+    if (!data.weather?.length || !data.main || !data.coord) {
       return res.status(502).json({ error: 'No weather data found' });
     }
 

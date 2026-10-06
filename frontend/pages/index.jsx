@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import WeatherForm from '../components/WeatherForm';
 import WeatherDisplay from '../components/WeatherDisplay';
@@ -299,6 +299,32 @@ function SceneFX({ scene, isNight }) {
   }
 }
 
+/* -- API helpers -- */
+
+// Prefer the server's message; fall back to copy based on the status
+async function errorMessage(res, city) {
+  if (res.status === 404) {
+    return city ? `No place called "${city}" was found.` : 'No weather data for that location.';
+  }
+  let serverMessage;
+  try { serverMessage = (await res.json())?.error; } catch { /* non-JSON body */ }
+  if (serverMessage) return serverMessage;
+  if (res.status === 429) return 'Too many requests. Please wait a minute and try again.';
+  return 'Weather service is unavailable right now. Please try again later.';
+}
+
+// Nearest named place for a point, or null. Never throws except on abort.
+async function fetchPlace(lat, lon, signal) {
+  try {
+    const res = await fetch(`/api/geocode/reverse?${new URLSearchParams({ lat, lon })}`, { signal });
+    const place = res.ok ? await res.json() : null;
+    return place?.name ? place : null;
+  } catch (err) {
+    if (err.name === 'AbortError') throw err;
+    return null;
+  }
+}
+
 /* -- Main page -- */
 export default function Home() {
   const [weather,    setWeather]    = useState(null);
@@ -327,44 +353,54 @@ export default function Home() {
     };
   }, [isNight, scene]);
 
-  const fetchWeather = async ({ city, lat, lon }) => {
+  // Only the latest request may update state; starting a new one aborts the old
+  const requestRef = useRef(null);
+  useEffect(() => () => requestRef.current?.abort(), []);
+
+  // Loads weather for a city or a point. Previous data stays on screen until
+  // the new result arrives, so the map never falls back to its default view.
+  const loadWeather = async ({ city, lat, lon, labelFromCoords = false }) => {
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lon);
+    if (!hasCoords && !city) return;
+
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    const { signal } = controller;
+
     setLoading(true);
     setError('');
-    setWeather(null);
     try {
-      let url = '/api/weather?';
-      url += (lat && lon) ? `lat=${lat}&lon=${lon}` : `city=${encodeURIComponent(city)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('City not found or API error');
-      setWeather(await res.json());
+      const params = new URLSearchParams(hasCoords ? { lat, lon } : { city });
+      // Map clicks need a place name for the input; fetch it alongside the weather
+      const placePromise = labelFromCoords ? fetchPlace(lat, lon, signal) : null;
+      placePromise?.catch(() => {}); // avoid an unhandled rejection if the weather call fails first
+
+      const res = await fetch(`/api/weather?${params}`, { signal });
+      if (!res.ok) throw new Error(await errorMessage(res, city));
+      const data = await res.json();
+      if (signal.aborted) return;
+      setWeather(data);
+
+      if (placePromise) {
+        const place = await placePromise;
+        if (signal.aborted) return;
+        setInputValue(place
+          ? [place.name, place.state, place.country].filter(Boolean).join(', ')
+          : `${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+      }
     } catch (err) {
-      setError(err.message);
+      if (err.name === 'AbortError' || signal.aborted) return;
+      setError(err instanceof TypeError
+        ? "Couldn't reach the server. Check your connection and try again."
+        : err.message);
     } finally {
-      setLoading(false);
+      if (requestRef.current === controller) setLoading(false);
     }
   };
 
-  const handleMapClick = async (lat, lon) => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`/api/weather?lat=${lat}&lon=${lon}`);
-      if (!res.ok) throw new Error('Location not found or API error');
-      const data = await res.json();
-      setWeather(data);
-      try {
-        const gr = await fetch(`/api/geocode/reverse?lat=${lat}&lon=${lon}`);
-        const place = gr.ok ? await gr.json() : null;
-        if (place?.name) {
-          setInputValue([place.name, place.state, place.country].filter(Boolean).join(', '));
-        } else setInputValue(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
-      } catch { setInputValue(`${lat.toFixed(4)}, ${lon.toFixed(4)}`); }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchWeather = (query) => loadWeather(query);
+  const handleMapClick = (lat, lon) => loadWeather({ lat, lon, labelFromCoords: true });
 
   const mapLat = weather?.lat  ?? 20;
   const mapLon = weather?.lon  ?? 0;

@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 
 export default function WeatherForm({ onSearch, loading, inputValue, setInputValue }) {
   const [suggestions, setSuggestions] = useState([]);
@@ -6,15 +6,29 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
   const [highlight, setHighlight]     = useState(-1);
   const [selected, setSelected]       = useState(null);
   const debounce = useRef();
+  const request  = useRef(null);
 
+  useEffect(() => () => {
+    clearTimeout(debounce.current);
+    request.current?.abort();
+  }, []);
+
+  // Each keystroke cancels the previous lookup, so an older, slower
+  // response can never replace the current suggestions
   const fetchSuggestions = async (q) => {
-    if (!q || q.length < 2) return setSuggestions([]);
+    request.current?.abort();
+    const query = q.trim();
+    if (query.length < 2) return setSuggestions([]);
+
+    const controller = new AbortController();
+    request.current = controller;
     try {
-      const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
-      if (!res.ok) return setSuggestions([]);
-      const data = await res.json();
-      setSuggestions(Array.isArray(data) ? data : []);
-    } catch { setSuggestions([]); }
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+      const data = res.ok ? await res.json() : [];
+      if (!controller.signal.aborted) setSuggestions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      if (err.name !== 'AbortError') setSuggestions([]);
+    }
   };
 
   const handleChange = (e) => {
@@ -36,7 +50,7 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
-    if (selected?.lat && selected?.lon) onSearch({ city: selected.name, lat: selected.lat, lon: selected.lon });
+    if (Number.isFinite(selected?.lat) && Number.isFinite(selected?.lon)) onSearch({ city: selected.name, lat: selected.lat, lon: selected.lon });
     else onSearch({ city: inputValue.trim() });
     setShowSug(false);
   };
