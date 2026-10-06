@@ -103,7 +103,8 @@ export async function owFetch(path, params, apiKey) {
   if (!res.ok) {
     console.error(`OpenWeather ${path} responded ${res.status}`);
     if (res.status === 404) throw new UpstreamError(404, 'Location not found');
-    if (res.status === 429) throw new UpstreamError(503, 'Weather service is busy. Please try again shortly.');
+    if (res.status === 429)
+      throw new UpstreamError(503, 'Weather service is busy. Please try again shortly.');
     throw new UpstreamError(502, 'Weather service error. Please try again later.');
   }
   return res.json();

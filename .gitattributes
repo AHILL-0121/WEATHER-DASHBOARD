@@ -7,7 +7,11 @@
 *.jpeg binary
 *.gif binary
 *.ico binary
-*.svg binary
 *.woff binary
 *.woff2 binary
 *.ttf binary
+*.webp binary
+*.avif binary
+
+# SVG is XML text: diff it, normalise its line endings
+*.svg text
