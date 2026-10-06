@@ -56,6 +56,19 @@ npm run dev
 
 Open <http://localhost:3000>.
 
+## Development
+
+Run these from `frontend/` (Node 22, see `.nvmrc`):
+
+| Command | What it does |
+|---|---|
+| `npm run lint` | ESLint (Next.js core-web-vitals rules) |
+| `npm run format` | Format with Prettier (`format:check` only reports) |
+| `npm test` | Run the Vitest suite once (`test:watch` to re-run on save) |
+| `npm run build` | Production build |
+
+CI (`.github/workflows/ci.yml`) runs lint, format check, tests, build and `npm audit --omit=dev` on every pull request and push to `main`.
+
 ## Deployment (Vercel)
 
 ```bash

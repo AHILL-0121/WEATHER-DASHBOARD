@@ -1,17 +1,20 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export default function WeatherForm({ onSearch, loading, inputValue, setInputValue }) {
   const [suggestions, setSuggestions] = useState([]);
-  const [showSug, setShowSug]         = useState(false);
-  const [highlight, setHighlight]     = useState(-1);
-  const [selected, setSelected]       = useState(null);
+  const [showSug, setShowSug] = useState(false);
+  const [highlight, setHighlight] = useState(-1);
+  const [selected, setSelected] = useState(null);
   const debounce = useRef();
-  const request  = useRef(null);
+  const request = useRef(null);
 
-  useEffect(() => () => {
-    clearTimeout(debounce.current);
-    request.current?.abort();
-  }, []);
+  useEffect(
+    () => () => {
+      clearTimeout(debounce.current);
+      request.current?.abort();
+    },
+    [],
+  );
 
   // Each keystroke cancels the previous lookup, so an older, slower
   // response can never replace the current suggestions
@@ -50,7 +53,8 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
-    if (Number.isFinite(selected?.lat) && Number.isFinite(selected?.lon)) onSearch({ city: selected.name, lat: selected.lat, lon: selected.lon });
+    if (Number.isFinite(selected?.lat) && Number.isFinite(selected?.lon))
+      onSearch({ city: selected.name, lat: selected.lat, lon: selected.lon });
     else onSearch({ city: inputValue.trim() });
     setShowSug(false);
   };
@@ -63,8 +67,14 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
       setHighlight(-1);
       return;
     }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlight(h => (h + 1) % suggestions.length); }
-    if (e.key === 'ArrowUp')   { e.preventDefault(); setHighlight(h => (h - 1 + suggestions.length) % suggestions.length); }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlight((h) => (h + 1) % suggestions.length);
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlight((h) => (h - 1 + suggestions.length) % suggestions.length);
+    }
     // Enter on a highlighted suggestion picks it and searches in one step
     if (e.key === 'Enter' && highlight >= 0) {
       e.preventDefault();
@@ -93,9 +103,17 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
           </div>
           {/* A new search while one is loading cancels the old one, so only an empty input disables this */}
           <button type="submit" className="search-btn" disabled={!inputValue.trim()}>
-            {loading
-              ? <><i className="fas fa-circle-notch fa-spin" style={{ marginRight: 6 }} />Loading</>
-              : <><i className="fas fa-location-crosshairs" style={{ marginRight: 6 }} />Search</>}
+            {loading ? (
+              <>
+                <i className="fas fa-circle-notch fa-spin" style={{ marginRight: 6 }} />
+                Loading
+              </>
+            ) : (
+              <>
+                <i className="fas fa-location-crosshairs" style={{ marginRight: 6 }} />
+                Search
+              </>
+            )}
           </button>
         </div>
 
@@ -120,4 +138,3 @@ export default function WeatherForm({ onSearch, loading, inputValue, setInputVal
     </div>
   );
 }
-
