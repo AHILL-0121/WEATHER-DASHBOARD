@@ -4,15 +4,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WeatherForm from './WeatherForm';
+import type { WeatherQuery } from '../lib/weatherClient';
 
 afterEach(cleanup);
 
 const PARIS = { name: 'Paris', country: 'FR', lat: 48.85, lon: 2.35 };
 const PARIS_TX = { name: 'Paris', state: 'Texas', country: 'US', lat: 33.66, lon: -95.56 };
 
-const json = (body) => new Response(JSON.stringify(body), { status: 200 });
+const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
 
-function Harness({ onSearch, loading = false }) {
+function Harness({ onSearch, loading = false }: { onSearch: (q: WeatherQuery) => void; loading?: boolean }) {
   const [value, setValue] = useState('');
   return <WeatherForm onSearch={onSearch} loading={loading} inputValue={value} setInputValue={setValue} />;
 }
@@ -84,7 +85,7 @@ describe('WeatherForm', () => {
   it('ignores a slow, stale suggestion response (BUG-03)', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
-      const pending = [];
+      const pending: { url: string; resolve: (res: Response) => void }[] = [];
       vi.stubGlobal(
         'fetch',
         vi.fn(
@@ -109,8 +110,8 @@ describe('WeatherForm', () => {
         '/api/geocode?q=London',
       ]);
       await act(async () => {
-        pending[1].resolve(json([{ name: 'London', country: 'GB', lat: 51.5, lon: -0.12 }]));
-        pending[0].resolve(json([{ name: 'Lome', country: 'TG', lat: 6.13, lon: 1.22 }]));
+        pending[1]!.resolve(json([{ name: 'London', country: 'GB', lat: 51.5, lon: -0.12 }]));
+        pending[0]!.resolve(json([{ name: 'Lome', country: 'TG', lat: 6.13, lon: 1.22 }]));
       });
 
       expect(await screen.findByText('London')).toBeInTheDocument();

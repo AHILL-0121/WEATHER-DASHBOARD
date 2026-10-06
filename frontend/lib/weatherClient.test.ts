@@ -3,7 +3,8 @@ import { clearCache, errorMessage, fetchPlace, getWeather, placeLabel } from './
 
 beforeEach(clearCache);
 
-const response = (status, body) => new Response(body === undefined ? '' : JSON.stringify(body), { status });
+const response = (status: number, body?: unknown) =>
+  new Response(body === undefined ? '' : JSON.stringify(body), { status });
 
 describe('errorMessage (BUG-05)', () => {
   it('names the city on 404', async () => {
@@ -26,7 +27,7 @@ describe('fetchPlace', () => {
   it('returns the place when it has a name', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(200, { name: 'Paris', country: 'FR' })));
     expect(await fetchPlace(48.85, 2.35)).toEqual({ name: 'Paris', country: 'FR' });
-    expect(fetch.mock.calls[0][0]).toBe('/api/geocode/reverse?lat=48.85&lon=2.35');
+    expect(vi.mocked(fetch).mock.calls[0]![0]).toBe('/api/geocode/reverse?lat=48.85&lon=2.35');
   });
 
   it('returns null for unnamed points and failures', async () => {
@@ -60,7 +61,7 @@ describe('getWeather', () => {
     );
     await getWeather({ city: 'Paris', lat: 0, lon: 0 });
     await getWeather({ city: 'Paris' });
-    expect(fetch.mock.calls.map((c) => c[0])).toEqual([
+    expect(vi.mocked(fetch).mock.calls.map((c) => c[0])).toEqual([
       '/api/weather?lat=0&lon=0',
       '/api/weather?city=Paris',
     ]);

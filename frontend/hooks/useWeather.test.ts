@@ -4,7 +4,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import useWeather from './useWeather';
 import { clearCache } from '../lib/weatherClient';
 
-const json = (status, body) => new Response(JSON.stringify(body), { status });
+const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
 const LONDON = { city: 'London', lat: 51.51, lon: -0.13 };
 const PARIS = { city: 'Paris', lat: 48.85, lon: 2.35 };
 
@@ -12,11 +12,11 @@ beforeEach(clearCache);
 
 // fetch whose responses the test resolves by hand, in any order
 function controllableFetch() {
-  const calls = [];
+  const calls: { url: string; resolve: (res: Response) => void }[] = [];
   vi.stubGlobal(
     'fetch',
     vi.fn(
-      (url, { signal } = {}) =>
+      (url: RequestInfo | URL, { signal }: RequestInit = {}) =>
         new Promise((resolve, reject) => {
           calls.push({ url: String(url), resolve });
           signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
@@ -53,8 +53,8 @@ describe('useWeather', () => {
       result.current.search({ city: 'Paris' });
     });
     await act(async () => {
-      calls[1].resolve(json(200, PARIS));
-      calls[0].resolve(json(200, LONDON)); // already aborted, must be ignored
+      calls[1]!.resolve(json(200, PARIS));
+      calls[0]!.resolve(json(200, LONDON)); // already aborted, must be ignored
     });
 
     await waitFor(() => expect(result.current.loading).toBe(false));

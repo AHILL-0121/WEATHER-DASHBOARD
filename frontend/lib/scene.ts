@@ -1,5 +1,17 @@
+export const ALL_SCENES = [
+  'clear',
+  'clouds',
+  'rain',
+  'drizzle',
+  'snow',
+  'thunderstorm',
+  'mist',
+  'default',
+] as const;
+export type Scene = (typeof ALL_SCENES)[number];
+
 // OpenWeather condition ("Clear", "Thunderstorm", …) → background scene name
-export function getScene(condition) {
+export function getScene(condition: string | undefined): Scene {
   if (!condition) return 'default';
   const c = condition.toLowerCase();
   if (c.includes('clear') || c.includes('sun')) return 'clear';
@@ -11,5 +23,3 @@ export function getScene(condition) {
   if (c.includes('cloud')) return 'clouds';
   return 'default';
 }
-
-export const ALL_SCENES = ['clear', 'clouds', 'rain', 'drizzle', 'snow', 'thunderstorm', 'mist', 'default'];
