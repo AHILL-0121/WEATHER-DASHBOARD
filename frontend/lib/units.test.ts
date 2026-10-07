@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compass, dewPoint, formatTemp, formatVisibility, formatWind } from './units';
+import { compass, dewPoint, formatPrecip, formatTemp, formatVisibility, formatWind } from './units';
 
 describe('units', () => {
   it('formats temperatures in both systems', () => {
@@ -19,6 +19,11 @@ describe('units', () => {
     expect(formatVisibility(4_200, 'metric')).toEqual(['4.2', 'km']);
     expect(formatVisibility(10_000, 'imperial')).toEqual(['6+', 'mi']);
     expect(formatVisibility(1_609.344, 'imperial')).toEqual(['1.0', 'mi']);
+  });
+
+  it('formats precipitation', () => {
+    expect(formatPrecip(1.44, 'metric')).toEqual(['1.4', 'mm']);
+    expect(formatPrecip(25.4, 'imperial')).toEqual(['1.00', 'in']);
   });
 
   it('computes the dew point', () => {

@@ -1,5 +1,5 @@
 // Browser-side helpers for calling our own /api routes
-import type { ApiErrorDTO, PlaceDTO, WeatherDTO } from './types';
+import type { AirDTO, ApiErrorDTO, ForecastDTO, PlaceDTO, WeatherDTO } from './types';
 
 /** What to search for: a city name, or a point (which wins when valid) */
 export interface WeatherQuery {
@@ -44,6 +44,18 @@ export function getWeather(query: WeatherQuery, signal?: AbortSignal): Promise<W
     byPoint ? { lat: String(query.lat), lon: String(query.lon) } : { city: query.city ?? '' },
   );
   return getJson<WeatherDTO>(`/api/weather?${params}`, { signal, city: byPoint ? undefined : query.city });
+}
+
+const pointParams = (lat: number, lon: number) => new URLSearchParams({ lat: String(lat), lon: String(lon) });
+
+/** Next 24 h and daily summaries for a point */
+export function getForecast(lat: number, lon: number, signal?: AbortSignal): Promise<ForecastDTO> {
+  return getJson<ForecastDTO>(`/api/forecast?${pointParams(lat, lon)}`, { signal });
+}
+
+/** Current air quality for a point */
+export function getAir(lat: number, lon: number, signal?: AbortSignal): Promise<AirDTO> {
+  return getJson<AirDTO>(`/api/air?${pointParams(lat, lon)}`, { signal });
 }
 
 // Prefer the server's message; fall back to copy based on the status

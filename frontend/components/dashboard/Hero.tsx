@@ -1,7 +1,9 @@
 import type { CSSProperties } from 'react';
+import { Info, Umbrella } from 'lucide-react';
 import { CONDITION_LABEL, conditionKind, type ConditionKind } from '@/lib/condition';
 import { getLocalTime } from '@/lib/time';
 import { formatTemp, toDisplayTemp, type Units } from '@/lib/units';
+import type { Summary } from '@/lib/summary';
 import type { PlaceDTO, WeatherDTO } from '@/lib/types';
 import WeatherArt from './WeatherArt';
 
@@ -46,9 +48,11 @@ interface Props {
   units: Units;
   night: boolean;
   now: number;
+  /** Plain-language outlook; null until the forecast arrives */
+  summary: Summary | null;
 }
 
-export default function Hero({ weather, place, units, night, now }: Props) {
+export default function Hero({ weather, place, units, night, now, summary }: Props) {
   const kind = conditionKind(weather);
   const [top, bottom, ink] = GRADIENTS[night ? 'night' : 'day'][kind];
   const lightInk = ink === '#fff';
@@ -57,6 +61,7 @@ export default function Hero({ weather, place, units, night, now }: Props) {
     '--h2': bottom,
     '--h-ink': ink,
     '--h-ink-2': lightInk ? 'rgb(255 255 255 / 0.82)' : 'rgb(13 23 38 / 0.74)',
+    '--h-glass': lightInk ? 'rgb(255 255 255 / 0.12)' : 'rgb(255 255 255 / 0.45)',
   } as CSSProperties;
 
   const name = place?.name || weather.city || 'Unnamed location';
@@ -101,6 +106,19 @@ export default function Hero({ weather, place, units, night, now }: Props) {
         <div className="absolute top-16 right-3.5 w-[140px] opacity-95 min-[600px]:static min-[600px]:w-[clamp(150px,20vw,230px)] min-[600px]:self-center min-[600px]:opacity-100">
           <WeatherArt kind={kind} night={night} />
         </div>
+        {summary && (
+          <p className="col-span-full mt-3.5 mb-0 flex items-start gap-2.5 rounded-lg bg-(--h-glass) px-3.5 py-3 text-[15px] leading-[1.45]">
+            {summary.wet ? (
+              <Umbrella className="mt-0.5 size-[18px] shrink-0" strokeWidth={1.6} aria-hidden="true" />
+            ) : (
+              <Info className="mt-0.5 size-[18px] shrink-0" strokeWidth={1.6} aria-hidden="true" />
+            )}
+            <span>
+              <b className="font-semibold">{summary.lead}</b>
+              {summary.rest}
+            </span>
+          </p>
+        )}
       </div>
     </section>
   );

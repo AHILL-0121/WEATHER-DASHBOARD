@@ -52,6 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       sunrise: data.sys?.sunrise,
       sunset: data.sys?.sunset,
       clouds: data.clouds?.all,
+      precip_1h: (data.rain?.['1h'] ?? 0) + (data.snow?.['1h'] ?? 0),
       icon: iconUrl(current!.icon),
       timezone: data.timezone,
     });

@@ -7,16 +7,20 @@ import Sidebar from '../components/dashboard/Sidebar';
 import CommandSearch from '../components/dashboard/CommandSearch';
 import Hero from '../components/dashboard/Hero';
 import DetailPanels from '../components/dashboard/DetailPanels';
+import HourlyStrip from '../components/dashboard/HourlyStrip';
+import WeekList from '../components/dashboard/WeekList';
 import Credits from '../components/dashboard/Credits';
 import useNow from '../hooks/useNow';
 import useWeather from '../hooks/useWeather';
 import usePlaces, { samePlace } from '../hooks/usePlaces';
 import useSavedWeather from '../hooks/useSavedWeather';
+import usePointData from '../hooks/usePointData';
 import { useEffectiveTheme, useTheme, useUnits } from '../hooks/usePrefs';
 import { CONDITION_LABEL, conditionKind } from '../lib/condition';
 import { isNightAt } from '../lib/time';
 import { toDisplayTemp } from '../lib/units';
-import { fetchPlace } from '../lib/weatherClient';
+import { heroSummary, upcoming } from '../lib/summary';
+import { fetchPlace, getAir, getForecast } from '../lib/weatherClient';
 import { cn } from '../lib/utils';
 import type { PlaceDTO } from '../lib/types';
 
@@ -44,6 +48,12 @@ export default function Home() {
   const mapTheme = useEffectiveTheme(theme);
   const { weather, loading, error, search, retry } = useWeather();
   const savedWeather = useSavedWeather(hydrated ? saved : []);
+  const forecast = usePointData(
+    hydrated ? current?.lat : undefined,
+    hydrated ? current?.lon : undefined,
+    getForecast,
+  );
+  const air = usePointData(hydrated ? current?.lat : undefined, hydrated ? current?.lon : undefined, getAir);
   const now = useNow();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notice, setNotice] = useState('');
@@ -104,6 +114,8 @@ export default function Home() {
   }, [choosePoint]);
 
   const night = isNightAt(weather, now);
+  const hours = forecast.data ? upcoming(forecast.data, now) : [];
+  const summary = weather && hours.length ? heroSummary(weather, hours, units) : null;
   const kind = weather ? conditionKind(weather) : null;
   const name = current?.name || weather?.city || 'Unnamed location';
   const message = error || notice;
@@ -181,9 +193,50 @@ export default function Home() {
             <div className={cn('transition-opacity duration-150', loading && weather && 'opacity-50')}>
               {weather ? (
                 <>
-                  <Hero weather={weather} place={current} units={units} night={night} now={now} />
-                  <div className="mt-4">
-                    <DetailPanels weather={weather} units={units} now={now} />
+                  <Hero
+                    weather={weather}
+                    place={current}
+                    units={units}
+                    night={night}
+                    now={now}
+                    summary={summary}
+                  />
+                  {hours.length > 0 ? (
+                    <HourlyStrip
+                      key={`${current.lat},${current.lon}`}
+                      weather={weather}
+                      hours={hours}
+                      units={units}
+                      now={now}
+                    />
+                  ) : (
+                    forecast.status === 'error' && (
+                      <p
+                        role="status"
+                        className="mt-4 rounded-xl border border-border bg-card px-[18px] py-4 text-sm text-muted-foreground shadow-card"
+                      >
+                        The forecast isn&apos;t available right now. Current conditions are up to date.
+                      </p>
+                    )
+                  )}
+                  <div className="mt-4 grid grid-cols-1 items-start gap-4 min-[960px]:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+                    {forecast.data && forecast.data.daily.length > 0 && (
+                      <WeekList forecast={forecast.data} currentTemp={weather.temp} units={units} now={now} />
+                    )}
+                    <div
+                      className={cn(
+                        !(forecast.data && forecast.data.daily.length) && 'min-[960px]:col-span-2',
+                      )}
+                    >
+                      <DetailPanels
+                        weather={weather}
+                        hours={hours}
+                        air={air.data}
+                        airStatus={air.status}
+                        units={units}
+                        now={now}
+                      />
+                    </div>
                   </div>
                 </>
               ) : (

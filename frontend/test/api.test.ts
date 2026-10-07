@@ -131,6 +131,13 @@ describe('/api/weather', () => {
     expect(res.statusCode).toBe(504);
   });
 
+  it('adds up the last hour of rain and snow', async () => {
+    mockUpstream({ ...OW_WEATHER, rain: { '1h': 0.6 }, snow: { '1h': 0.2 } });
+    expect((await call(weather, { city: 'London' })).body.precip_1h).toBeCloseTo(0.8);
+    mockUpstream(OW_WEATHER);
+    expect((await call(weather, { city: 'London' })).body.precip_1h).toBe(0);
+  });
+
   it('survives partial payloads such as ocean points (BUG-06)', async () => {
     mockUpstream({ ...OW_WEATHER, name: '', sys: undefined, wind: undefined, clouds: undefined });
     const res = await call(weather, { lat: '0', lon: '-30' });

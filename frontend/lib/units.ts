@@ -74,3 +74,8 @@ export function compass(deg: number): { name: string; abbr: string } {
   const i = Math.round((((deg % 360) + 360) % 360) / 22.5) % 16;
   return { name: DIRS[i]!, abbr: ABBR[i]! };
 }
+
+/** [value, unit] for precipitation in mm */
+export function formatPrecip(mm: number, units: Units): [string, string] {
+  return units === 'metric' ? [mm.toFixed(1), 'mm'] : [(mm / 25.4).toFixed(2), 'in'];
+}

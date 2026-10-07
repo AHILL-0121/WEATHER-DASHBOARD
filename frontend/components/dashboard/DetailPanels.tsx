@@ -1,7 +1,16 @@
 import type { ReactNode } from 'react';
 import { formatTime } from '@/lib/time';
-import { compass, dewPoint, formatTemp, formatVisibility, formatWind, type Units } from '@/lib/units';
-import type { WeatherDTO } from '@/lib/types';
+import { pressureTrend } from '@/lib/summary';
+import {
+  compass,
+  dewPoint,
+  formatPrecip,
+  formatTemp,
+  formatVisibility,
+  formatWind,
+  type Units,
+} from '@/lib/units';
+import type { AirDTO, ForecastHourDTO, WeatherDTO } from '@/lib/types';
 import InfoTip from './InfoTip';
 
 function Panel({ label, tip, children }: { label: string; tip?: string; children: ReactNode }) {
@@ -171,7 +180,7 @@ function WindPanel({ w, units }: { w: WeatherDTO; units: Units }) {
   );
 }
 
-function PressurePanel({ hPa }: { hPa: number }) {
+function PressurePanel({ hPa, trend }: { hPa: number; trend: string | null }) {
   const min = 960;
   const max = 1050;
   const angle = ((-120 + ((Math.min(Math.max(hPa, min), max) - min) / (max - min)) * 240) * Math.PI) / 180;
@@ -214,7 +223,53 @@ function PressurePanel({ hPa }: { hPa: number }) {
           </text>
         </svg>
       </div>
-      <Note>{pressureNote(hPa)}</Note>
+      <Note>{trend ?? pressureNote(hPa)}</Note>
+    </Panel>
+  );
+}
+
+const AQI: [label: string, colour: string][] = [
+  ['Good', '#4caf6d'],
+  ['Fair', '#9cc04a'],
+  ['Moderate', '#e3b934'],
+  ['Poor', '#ec8536'],
+  ['Very poor', '#d2433a'],
+];
+
+function AirPanel({ air, status }: { air: AirDTO | null; status: string }) {
+  const tip = 'OpenWeather index from 1 (good) to 5 (very poor), mostly driven by fine particles (PM2.5).';
+  if (!air) {
+    return (
+      <Panel label="Air quality" tip={tip}>
+        <Value>--</Value>
+        <Note>{status === 'error' ? "Air quality isn't available right now." : 'Loading…'}</Note>
+      </Panel>
+    );
+  }
+  const [label] = AQI[air.aqi - 1]!;
+  const pm = air.components.pm2_5;
+  return (
+    <Panel label="Air quality" tip={tip}>
+      <Value unit={`${air.aqi} of 5`}>{label}</Value>
+      <Scale colours={AQI.map(([, c]) => c)} active={air.aqi - 1} />
+      <Note>
+        {pm !== undefined ? `PM2.5 ${Math.round(pm)} µg/m³. ` : ''}
+        {air.aqi <= 2 ? 'Fine for everyone.' : 'Sensitive groups should limit long outdoor effort.'}
+      </Note>
+    </Panel>
+  );
+}
+
+function PrecipPanel({ mm, hours, units }: { mm: number; hours: ForecastHourDTO[]; units: Units }) {
+  const [value, unit] = formatPrecip(mm, units);
+  const peak = hours.length ? Math.max(...hours.map((h) => h.pop)) : null;
+  return (
+    <Panel label="Precipitation">
+      <Value unit={unit}>{value}</Value>
+      <Note>
+        {mm > 0 ? 'In the last hour.' : 'None in the last hour.'}
+        {peak !== null ? ` ${peak}% peak chance in the next 24 h.` : ''}
+      </Note>
     </Panel>
   );
 }
@@ -279,24 +334,23 @@ function SunPanel({ w, now }: { w: WeatherDTO; now: number }) {
   );
 }
 
-export default function DetailPanels({
-  weather: w,
-  units,
-  now,
-}: {
+interface Props {
   weather: WeatherDTO;
+  /** Next 24 h of forecast steps; empty while the forecast loads or if it failed */
+  hours: ForecastHourDTO[];
+  air: AirDTO | null;
+  airStatus: string;
   units: Units;
   now: number;
-}) {
+}
+
+export default function DetailPanels({ weather: w, hours, air, airStatus, units, now }: Props) {
   const dew = dewPoint(w.temp, w.humidity);
   const comfort = COMFORT.findIndex(([, below]) => dew < below);
   const visibility = w.visibility !== undefined ? formatVisibility(w.visibility, units) : null;
 
   return (
-    <section
-      aria-label="Current details"
-      className="grid grid-cols-1 gap-4 min-[460px]:grid-cols-2 lg:grid-cols-3"
-    >
+    <section aria-label="Current details" className="grid grid-cols-1 gap-4 min-[460px]:grid-cols-2">
       <Panel
         label="Feels like"
         tip="Combines temperature with humidity and wind to estimate how the air feels on your skin."
@@ -319,7 +373,11 @@ export default function DetailPanels({
         </Note>
       </Panel>
 
-      <PressurePanel hPa={w.pressure} />
+      <PrecipPanel mm={w.precip_1h} hours={hours} units={units} />
+
+      <PressurePanel hPa={w.pressure} trend={pressureTrend(w.pressure, hours)} />
+
+      <AirPanel air={air} status={airStatus} />
 
       <Panel label="Visibility">
         <Value unit={visibility?.[1]}>{visibility?.[0] ?? '--'}</Value>
