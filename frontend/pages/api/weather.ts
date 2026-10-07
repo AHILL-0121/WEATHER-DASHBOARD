@@ -11,6 +11,8 @@ import {
 import { OwWeatherSchema } from '../../lib/owSchemas';
 import type { ApiErrorDTO, WeatherDTO } from '../../lib/types';
 
+const sentenceCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse<WeatherDTO | ApiErrorDTO>) {
   const apiKey = guard(req, res);
   if (!apiKey) return;
@@ -40,10 +42,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       temp_min: data.main.temp_min,
       temp_max: data.main.temp_max,
       condition: current!.main,
+      description: sentenceCase(current!.description),
       humidity: data.main.humidity,
       pressure: data.main.pressure,
       wind_speed: data.wind?.speed,
       wind_deg: data.wind?.deg,
+      wind_gust: data.wind?.gust,
       visibility: data.visibility,
       sunrise: data.sys?.sunrise,
       sunset: data.sys?.sunset,

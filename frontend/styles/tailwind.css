@@ -1,19 +1,12 @@
 /*
-  Tailwind v4 + design tokens for the v3 "Calm Instrument" redesign
+  Tailwind v4 + design tokens for the v3 "Calm Instrument" design
   (plan/sampleui.html).
 
-  Preflight (Tailwind's reset) is left out while Bootstrap still styles the
-  current UI: importing it now would restyle every existing element. Switch
-  the first import to `@import 'tailwindcss';` when Bootstrap is removed
-  (PERF-02).
-
-  The raw tokens are prefixed `--ci-` because glassmorphism.css already uses
-  --accent, --text and --radius. Components use the Tailwind names
-  (bg-background, text-muted-foreground, …), which follow shadcn/ui's
-  conventions so its components work unchanged.
+  Components use the Tailwind names (bg-background, text-muted-foreground, …),
+  which follow shadcn/ui's conventions so its components work unchanged. The
+  raw tokens are prefixed `--ci-` (Calm Instrument).
 */
-@import 'tailwindcss/theme.css' layer(theme);
-@import 'tailwindcss/utilities.css' layer(utilities);
+@import 'tailwindcss';
 
 /* Dark follows the system unless the page sets data-theme="light"; data-theme="dark" forces it */
 @custom-variant dark {
@@ -124,4 +117,72 @@
   --radius-xl: 16px;
 
   --shadow-card: var(--ci-shadow);
+}
+
+@layer base {
+  body {
+    background: var(--ci-bg);
+    color: var(--ci-text);
+    font-size: 15px;
+    line-height: 1.5;
+    font-feature-settings: 'tnum' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  :root {
+    color-scheme: light;
+  }
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      color-scheme: dark;
+    }
+  }
+  :focus-visible {
+    outline: 2px solid var(--ci-accent);
+    outline-offset: 2px;
+  }
+  button {
+    cursor: pointer;
+  }
+}
+
+/* Motion policy: nothing moves on its own; input-driven motion only, and none
+   at all when the system asks for reduced motion (A11Y-03) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Leaflet, in the app's tokens */
+.leaflet-container {
+  font-family: inherit;
+  background: var(--ci-surface-2);
+}
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: var(--ci-surface);
+  color: var(--ci-text);
+  border-color: var(--ci-border);
+}
+.leaflet-control-attribution.leaflet-control {
+  background: color-mix(in srgb, var(--ci-surface) 85%, transparent);
+  color: var(--ci-faint);
+}
+.leaflet-control-attribution a {
+  color: var(--ci-muted);
+}
+.map-pin {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ci-accent);
+  border: 3px solid #fff;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.35);
 }

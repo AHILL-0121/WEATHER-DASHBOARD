@@ -18,13 +18,13 @@ A weather dashboard built with **Next.js**. Search for a city or click anywhere 
 ```
 frontend/
 ├── components/
-│   ├── scenes/            # Animated background scenes (sun, rain, snow, …) and SceneFX selector
-│   ├── WeatherDisplay.tsx # Current-conditions panel
-│   ├── WeatherForm.tsx    # Search box with suggestions
-│   ├── WeatherMap.tsx     # Leaflet map
-│   ├── Header.tsx, Footer.tsx, PageHead.tsx, ErrorBoundary.tsx
+│   ├── dashboard/         # Sidebar, CommandSearch, Hero, WeatherArt, DetailPanels, MapCard, …
+│   ├── ui/                # shadcn/ui primitives (dialog)
+│   ├── PageHead.tsx, ErrorBoundary.tsx
 ├── hooks/
-│   ├── useWeather.ts      # Loads weather: cancels stale requests, caches results
+│   ├── useWeather.ts      # Loads weather: cancels stale requests, keeps the last good result
+│   ├── usePlaces.ts       # Saved, recent and current places (localStorage)
+│   ├── usePrefs.ts        # Units and theme
 │   └── useNow.ts          # Shared once-a-minute clock
 ├── lib/
 │   ├── openweather.ts     # Server-only: validation, rate limit, upstream calls
@@ -33,7 +33,9 @@ frontend/
 │   ├── types.ts           # Response types of our /api routes (shared with the browser)
 │   ├── weatherClient.ts   # Browser-side calls to /api, error messages, cache
 │   ├── time.ts            # Timezone-safe time and sun maths
-│   └── scene.ts           # Condition → background scene
+│   ├── condition.ts       # OpenWeather condition → one of seven looks
+│   ├── units.ts           # °C/°F, km/h/mph, dew point, compass
+│   └── tempColor.ts       # Temperature colour scale
 ├── pages/
 │   ├── index.tsx          # Dashboard
 │   ├── 404.tsx
@@ -44,7 +46,7 @@ frontend/
 │       └── geocode/
 │           ├── index.ts       # GET /api/geocode?q=        (search suggestions)
 │           └── reverse.ts     # GET /api/geocode/reverse?lat=&lon=  (map-click names)
-├── styles/                # Global CSS
+├── styles/                # Tailwind v4 + design tokens
 ├── test/                  # API tests and helpers
 └── .env.example           # Environment variables template
 ```

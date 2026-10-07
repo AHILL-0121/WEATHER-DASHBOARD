@@ -10,8 +10,8 @@ const OW_WEATHER = {
   coord: { lat: 51.51, lon: -0.13 },
   sys: { country: 'GB', sunrise: 1, sunset: 2 },
   main: { temp: 12, feels_like: 11, temp_min: 10, temp_max: 14, humidity: 80, pressure: 1012 },
-  weather: [{ main: 'Clouds', icon: '04d' }],
-  wind: { speed: 3, deg: 200 },
+  weather: [{ main: 'Clouds', description: 'broken clouds', icon: '04d' }],
+  wind: { speed: 3, deg: 200, gust: 7 },
   clouds: { all: 75 },
   visibility: 10000,
   timezone: 3600,
@@ -67,7 +67,14 @@ describe('/api/weather', () => {
     mockUpstream(OW_WEATHER);
     const res = await call(weather, { city: 'London' });
     expect(res.statusCode).toBe(200);
-    expect(res.body).toMatchObject({ city: 'London', country: 'GB', temp: 12, condition: 'Clouds' });
+    expect(res.body).toMatchObject({
+      city: 'London',
+      country: 'GB',
+      temp: 12,
+      condition: 'Clouds',
+      description: 'Broken clouds',
+      wind_gust: 7,
+    });
     expect(res.headers['cache-control']).toMatch(/s-maxage=300/);
   });
 
