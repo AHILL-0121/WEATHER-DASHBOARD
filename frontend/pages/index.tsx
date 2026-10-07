@@ -15,6 +15,7 @@ import useWeather from '../hooks/useWeather';
 import usePlaces, { samePlace } from '../hooks/usePlaces';
 import useSavedWeather from '../hooks/useSavedWeather';
 import usePointData from '../hooks/usePointData';
+import useNearViewport from '../hooks/useNearViewport';
 import { useEffectiveTheme, useTheme, useUnits } from '../hooks/usePrefs';
 import { CONDITION_LABEL, conditionKind } from '../lib/condition';
 import { isNightAt } from '../lib/time';
@@ -63,6 +64,10 @@ export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [notice, setNotice] = useState('');
   const labelRequest = useRef<AbortController | null>(null);
+  // Leaflet is ~150 KB of script at the bottom of the page: load it only when
+  // the map is about to scroll into view, not during start-up (Lighthouse TBT)
+  const mapSlot = useRef<HTMLDivElement>(null);
+  const mapNear = useNearViewport(mapSlot);
 
   // Load the current place. Waits for hydration so a returning visitor's
   // stored place is used, rather than fetching the default first.
@@ -292,7 +297,11 @@ export default function Home() {
                       </p>
                     }
                   >
-                    <MapCard lat={current.lat} lon={current.lon} theme={mapTheme} onPick={choosePoint} />
+                    <div ref={mapSlot} className="min-h-[360px]">
+                      {mapNear && (
+                        <MapCard lat={current.lat} lon={current.lon} theme={mapTheme} onPick={choosePoint} />
+                      )}
+                    </div>
                   </ErrorBoundary>
                 </div>
               </section>

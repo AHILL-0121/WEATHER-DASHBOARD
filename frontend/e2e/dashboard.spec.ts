@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, showMap, test } from './fixtures';
 
 const hero = (page: Page) => page.locator('section[aria-labelledby="place-name"]');
 
@@ -83,8 +83,7 @@ test.describe('dashboard', () => {
 
   test('clicking the map loads that spot and names it', async ({ page }) => {
     await page.goto('/');
-    const map = page.locator('.leaflet-container');
-    await map.scrollIntoViewIfNeeded();
+    const map = await showMap(page);
     await map.click({ position: { x: 120, y: 120 } });
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lyon');
@@ -93,8 +92,7 @@ test.describe('dashboard', () => {
 
   test('map tiles come from MapTiler and follow the theme (UX-11)', async ({ page }) => {
     await page.goto('/');
-    const map = page.locator('.leaflet-container');
-    await map.scrollIntoViewIfNeeded();
+    const map = await showMap(page);
     test.skip(
       await page.getByText('Map tiles need NEXT_PUBLIC_MAPTILER_KEY').isVisible(),
       'Built without a MapTiler key',
@@ -114,8 +112,7 @@ test.describe('dashboard', () => {
   }) => {
     test.skip(test.info().project.name === 'mobile', 'Wheel and trackpad gestures are desktop only');
     await page.goto('/');
-    const map = page.locator('.leaflet-container');
-    await map.scrollIntoViewIfNeeded();
+    const map = await showMap(page);
     const tileZoom = async () =>
       Number(
         /\/256\/(\d+)\//.exec((await map.locator('img.leaflet-tile').last().getAttribute('src')) ?? '')?.[1],
@@ -161,8 +158,7 @@ test.describe('dashboard', () => {
 
     // A spot that isn't cached yet, so a request is really made
     fail = true;
-    const map = page.locator('.leaflet-container');
-    await map.scrollIntoViewIfNeeded();
+    const map = await showMap(page);
     await map.click({ position: { x: 120, y: 120 } });
 
     // Next.js adds its own (empty) route announcer with role=alert
@@ -222,6 +218,16 @@ test.describe('dashboard', () => {
       expect(cls).toBeLessThan(0.02);
     });
   }
+
+  test('loads the map only when it nears the viewport', async ({ page }) => {
+    test.skip(test.info().project.name !== 'mobile', 'On a phone the map is far below the first screen');
+    await page.goto('/');
+    await expect(page.getByRole('radiogroup', { name: 'Next 24 hours' })).toBeVisible();
+    await expect(page.locator('.leaflet-container')).toHaveCount(0);
+
+    await showMap(page);
+    await expect(page.locator('.leaflet-container')).toHaveCount(1);
+  });
 
   test('never scrolls sideways', async ({ page }) => {
     await page.goto('/');

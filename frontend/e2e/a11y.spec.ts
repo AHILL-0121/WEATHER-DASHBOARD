@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, showMap, test } from './fixtures';
 
 // Fails on serious or critical WCAG 2.2 A/AA issues (definition of done: axe
 // reports 0 serious/critical). Minor and moderate ones are printed only.
@@ -31,6 +31,7 @@ test.describe('accessibility (axe)', () => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/');
     await ready(page);
+    await showMap(page); // the map loads lazily; include its controls
     await audit(page, 'light');
   });
 
