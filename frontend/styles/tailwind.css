@@ -1,0 +1,127 @@
+/*
+  Tailwind v4 + design tokens for the v3 "Calm Instrument" redesign
+  (plan/sampleui.html).
+
+  Preflight (Tailwind's reset) is left out while Bootstrap still styles the
+  current UI: importing it now would restyle every existing element. Switch
+  the first import to `@import 'tailwindcss';` when Bootstrap is removed
+  (PERF-02).
+
+  The raw tokens are prefixed `--ci-` because glassmorphism.css already uses
+  --accent, --text and --radius. Components use the Tailwind names
+  (bg-background, text-muted-foreground, …), which follow shadcn/ui's
+  conventions so its components work unchanged.
+*/
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* Dark follows the system unless the page sets data-theme="light"; data-theme="dark" forces it */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+}
+
+:root {
+  --ci-bg: #eef1f5;
+  --ci-surface: #ffffff;
+  --ci-surface-2: #f5f7fa;
+  --ci-border: #dde3ea;
+  --ci-border-2: #c9d2dc;
+  --ci-text: #0d1726;
+  --ci-text-2: #3d4a5c;
+  --ci-muted: #5f6c7d;
+  --ci-faint: #7d8898;
+  --ci-accent: #1d5fd1;
+  --ci-on-accent: #ffffff;
+  --ci-accent-soft: rgb(29 95 209 / 0.09);
+  --ci-danger: #c4322b;
+  --ci-rain: #2a78d4;
+  --ci-track: #e7ebf0;
+  --ci-shadow: 0 1px 2px rgb(13 23 38 / 0.05), 0 4px 16px -8px rgb(13 23 38 / 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ci-bg: #0a0f17;
+    --ci-surface: #111823;
+    --ci-surface-2: #161f2c;
+    --ci-border: #1f2a38;
+    --ci-border-2: #2c3a4c;
+    --ci-text: #e7edf5;
+    --ci-text-2: #c2ccd8;
+    --ci-muted: #9aa8b8;
+    --ci-faint: #77859a;
+    --ci-accent: #6ea8ff;
+    --ci-on-accent: #0a0f17;
+    --ci-accent-soft: rgb(110 168 255 / 0.12);
+    --ci-danger: #f2726b;
+    --ci-rain: #5ea9f2;
+    --ci-track: #1d2735;
+    --ci-shadow: 0 1px 0 rgb(255 255 255 / 0.02) inset, 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  --ci-bg: #0a0f17;
+  --ci-surface: #111823;
+  --ci-surface-2: #161f2c;
+  --ci-border: #1f2a38;
+  --ci-border-2: #2c3a4c;
+  --ci-text: #e7edf5;
+  --ci-text-2: #c2ccd8;
+  --ci-muted: #9aa8b8;
+  --ci-faint: #77859a;
+  --ci-accent: #6ea8ff;
+  --ci-on-accent: #0a0f17;
+  --ci-accent-soft: rgb(110 168 255 / 0.12);
+  --ci-danger: #f2726b;
+  --ci-rain: #5ea9f2;
+  --ci-track: #1d2735;
+  --ci-shadow: 0 1px 0 rgb(255 255 255 / 0.02) inset, 0 8px 24px -12px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  /* shadcn/ui names */
+  --color-background: var(--ci-bg);
+  --color-foreground: var(--ci-text);
+  --color-card: var(--ci-surface);
+  --color-card-foreground: var(--ci-text);
+  --color-popover: var(--ci-surface);
+  --color-popover-foreground: var(--ci-text);
+  --color-primary: var(--ci-accent);
+  --color-primary-foreground: var(--ci-on-accent);
+  --color-secondary: var(--ci-surface-2);
+  --color-secondary-foreground: var(--ci-text);
+  --color-muted: var(--ci-surface-2);
+  --color-muted-foreground: var(--ci-muted);
+  --color-accent: var(--ci-accent-soft);
+  --color-accent-foreground: var(--ci-text);
+  --color-destructive: var(--ci-danger);
+  --color-border: var(--ci-border);
+  --color-input: var(--ci-border-2);
+  --color-ring: var(--ci-accent);
+
+  /* Extra tiers from the prototype */
+  --color-surface-2: var(--ci-surface-2);
+  --color-foreground-2: var(--ci-text-2);
+  --color-faint: var(--ci-faint);
+  --color-rain: var(--ci-rain);
+  --color-track: var(--ci-track);
+
+  /* Set by next/font in _app.tsx */
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-card: var(--ci-shadow);
+}
