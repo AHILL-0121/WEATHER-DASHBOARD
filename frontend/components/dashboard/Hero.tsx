@@ -50,9 +50,11 @@ interface Props {
   now: number;
   /** Plain-language outlook; null until the forecast arrives */
   summary: Summary | null;
+  /** Hold the outlook's space while the forecast loads, so the page doesn't shift */
+  summaryPending?: boolean;
 }
 
-export default function Hero({ weather, place, units, night, now, summary }: Props) {
+export default function Hero({ weather, place, units, night, now, summary, summaryPending }: Props) {
   const kind = conditionKind(weather);
   const [top, bottom, ink] = GRADIENTS[night ? 'night' : 'day'][kind];
   const lightInk = ink === '#fff';
@@ -106,8 +108,14 @@ export default function Hero({ weather, place, units, night, now, summary }: Pro
         <div className="absolute top-16 right-3.5 w-[140px] opacity-95 min-[600px]:static min-[600px]:w-[clamp(150px,20vw,230px)] min-[600px]:self-center min-[600px]:opacity-100">
           <WeatherArt kind={kind} night={night} />
         </div>
+        {summaryPending && (
+          <div
+            aria-hidden="true"
+            className="col-span-full mt-3.5 h-[111px] rounded-lg bg-(--h-glass) min-[600px]:h-[68px]"
+          />
+        )}
         {summary && (
-          <p className="col-span-full mt-3.5 mb-0 flex items-start gap-2.5 rounded-lg bg-(--h-glass) px-3.5 py-3 text-[15px] leading-[1.45]">
+          <p className="col-span-full mt-3.5 mb-0 flex min-h-[68px] items-start gap-2.5 rounded-lg bg-(--h-glass) px-3.5 py-3 text-[15px] leading-[1.45]">
             {summary.wet ? (
               <Umbrella className="mt-0.5 size-[18px] shrink-0" strokeWidth={1.6} aria-hidden="true" />
             ) : (

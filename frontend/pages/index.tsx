@@ -31,6 +31,11 @@ const MapCard = dynamic(() => import('../components/dashboard/MapCard'), {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+// A card-shaped stand-in that holds a section's space until its data arrives
+const Placeholder = ({ className }: { className?: string }) => (
+  <div aria-hidden="true" className={cn('rounded-xl border border-border bg-card', className)} />
+);
+
 // false during the server render and hydration, true afterwards
 const subscribeNever = () => () => {};
 const useHydrated = () =>
@@ -116,6 +121,8 @@ export default function Home() {
   const night = isNightAt(weather, now);
   const hours = forecast.data ? upcoming(forecast.data, now) : [];
   const summary = weather && hours.length ? heroSummary(weather, hours, units) : null;
+  // Still waiting for the forecast (not failed): keep its space reserved
+  const forecastPending = forecast.status !== 'error' && !forecast.data;
   const kind = weather ? conditionKind(weather) : null;
   // The weather on screen may still be an earlier place's (loading, or a
   // failed refresh), so only use the selected place's name when it matches
@@ -200,58 +207,68 @@ export default function Home() {
             </section>
           ) : (
             <div className={cn('transition-opacity duration-150', loading && weather && 'opacity-50')}>
+              {/* Every section keeps its final size while its data loads, so nothing
+                  jumps (CLS). Placeholders are static: no shimmer. */}
               {weather ? (
-                <>
-                  <Hero
-                    weather={weather}
-                    place={shownPlace}
-                    units={units}
-                    night={night}
-                    now={now}
-                    summary={summary}
-                  />
-                  {hours.length > 0 ? (
-                    <HourlyStrip
-                      key={`${current.lat},${current.lon}`}
+                <Hero
+                  weather={weather}
+                  place={shownPlace}
+                  units={units}
+                  night={night}
+                  now={now}
+                  summary={summary}
+                  summaryPending={!summary && forecastPending}
+                />
+              ) : (
+                <Placeholder className="h-[385px] rounded-[20px] min-[600px]:h-[423px]" />
+              )}
+
+              {weather && hours.length > 0 ? (
+                <HourlyStrip
+                  key={`${current.lat},${current.lon}`}
+                  weather={weather}
+                  hours={hours}
+                  units={units}
+                  now={now}
+                />
+              ) : forecast.status === 'error' ? (
+                <p
+                  role="status"
+                  className="mt-4 rounded-xl border border-border bg-card px-[18px] py-4 text-sm text-muted-foreground shadow-card"
+                >
+                  The forecast isn&apos;t available right now. Current conditions are up to date.
+                </p>
+              ) : (
+                <Placeholder className="mt-4 h-[296px] min-[500px]:h-[270px]" />
+              )}
+
+              <div className="mt-4 grid grid-cols-1 items-start gap-4 min-[960px]:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+                {weather && forecast.data && forecast.data.daily.length > 0 ? (
+                  <WeekList forecast={forecast.data} currentTemp={weather.temp} units={units} now={now} />
+                ) : (
+                  forecastPending && <Placeholder className="h-[312px]" />
+                )}
+                <div
+                  className={cn(!forecastPending && !forecast.data?.daily.length && 'min-[960px]:col-span-2')}
+                >
+                  {weather ? (
+                    <DetailPanels
                       weather={weather}
                       hours={hours}
+                      air={air.data}
+                      airStatus={air.status}
                       units={units}
                       now={now}
                     />
                   ) : (
-                    forecast.status === 'error' && (
-                      <p
-                        role="status"
-                        className="mt-4 rounded-xl border border-border bg-card px-[18px] py-4 text-sm text-muted-foreground shadow-card"
-                      >
-                        The forecast isn&apos;t available right now. Current conditions are up to date.
-                      </p>
-                    )
-                  )}
-                  <div className="mt-4 grid grid-cols-1 items-start gap-4 min-[960px]:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
-                    {forecast.data && forecast.data.daily.length > 0 && (
-                      <WeekList forecast={forecast.data} currentTemp={weather.temp} units={units} now={now} />
-                    )}
-                    <div
-                      className={cn(
-                        !(forecast.data && forecast.data.daily.length) && 'min-[960px]:col-span-2',
-                      )}
-                    >
-                      <DetailPanels
-                        weather={weather}
-                        hours={hours}
-                        air={air.data}
-                        airStatus={air.status}
-                        units={units}
-                        now={now}
-                      />
+                    <div className="grid grid-cols-1 gap-4 min-[460px]:grid-cols-2" aria-hidden="true">
+                      {Array.from({ length: 8 }, (_, i) => (
+                        <Placeholder key={i} className="h-[168px]" />
+                      ))}
                     </div>
-                  </div>
-                </>
-              ) : (
-                // First load: a quiet placeholder the size of the hero, no shimmer
-                <div className="h-[360px] rounded-[20px] border border-border bg-card" aria-hidden="true" />
-              )}
+                  )}
+                </div>
+              </div>
 
               <section
                 aria-labelledby="map-heading"
