@@ -62,6 +62,11 @@ export async function errorMessage(res: Response, city?: string): Promise<string
   return 'Weather service is unavailable right now. Please try again later.';
 }
 
+// Places matching a name, for search suggestions. Throws on failure or abort.
+export function searchPlaces(q: string, signal?: AbortSignal): Promise<PlaceDTO[]> {
+  return getJson<PlaceDTO[]>(`/api/geocode?${new URLSearchParams({ q })}`, { signal });
+}
+
 // Nearest named place for a point, or null. Never throws except on abort.
 export async function fetchPlace(lat: number, lon: number, signal?: AbortSignal): Promise<PlaceDTO | null> {
   try {

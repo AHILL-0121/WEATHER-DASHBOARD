@@ -84,24 +84,25 @@ describe('useWeather', () => {
     expect(result.current.error).toMatch(/Couldn't reach the server/);
   });
 
-  it('labels map clicks with the place name, or coordinates for open water', async () => {
+  it('retries the last search', async () => {
+    let fail = true;
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (url) => {
-        const u = String(url);
-        if (u.startsWith('/api/geocode/reverse')) {
-          return json(200, u.includes('lat=48.85') ? { name: 'Paris', country: 'FR' } : null);
-        }
-        return json(200, PARIS);
-      }),
+      vi.fn(async () => (fail ? json(503, { error: 'Weather service is busy.' }) : json(200, PARIS))),
     );
-    const onPlaceLabel = vi.fn();
-    const { result } = renderHook(() => useWeather({ onPlaceLabel }));
+    const { result } = renderHook(() => useWeather());
 
-    await act(() => result.current.searchPoint(48.85, 2.35));
-    await act(() => result.current.searchPoint(0, -30));
+    await act(() => result.current.search({ lat: 48.85, lon: 2.35 }));
+    expect(result.current.error).toBe('Weather service is busy.');
 
-    expect(onPlaceLabel.mock.calls).toEqual([['Paris, FR'], ['0.0000, -30.0000']]);
+    fail = false;
+    await act(() => result.current.retry());
+    expect(result.current.error).toBe('');
+    expect(result.current.weather).toEqual(PARIS);
+    expect(vi.mocked(fetch).mock.calls.map(([url]) => String(url))).toEqual([
+      '/api/weather?lat=48.85&lon=2.35',
+      '/api/weather?lat=48.85&lon=2.35',
+    ]);
   });
 
   it('ignores empty searches', async () => {

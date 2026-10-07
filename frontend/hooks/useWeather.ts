@@ -1,40 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchPlace, getWeather, hasCoords, type WeatherQuery } from '../lib/weatherClient';
+import { getWeather, hasCoords, type WeatherQuery } from '../lib/weatherClient';
 import type { WeatherDTO } from '../lib/types';
 
 const OFFLINE_MESSAGE = "Couldn't reach the server. Check your connection and try again.";
-
-interface Options {
-  /** Called with a display name for map clicks ("Paris, FR", or coordinates for open water) */
-  onPlaceLabel?: (label: string) => void;
-}
 
 export interface UseWeather {
   weather: WeatherDTO | null;
   loading: boolean;
   error: string;
   search: (query: WeatherQuery) => Promise<void>;
-  searchPoint: (lat: number, lon: number) => Promise<void>;
+  /** Repeats the last search, e.g. from the error banner */
+  retry: () => Promise<void>;
 }
 
 // The single path for loading weather. Only the latest request may update
 // state: starting a new one aborts the previous. The last good result stays
-// in `weather` while a new one loads or fails, so the map never jumps.
-export default function useWeather({ onPlaceLabel }: Options = {}): UseWeather {
+// in `weather` while a new one loads or fails, so the page never blanks.
+export default function useWeather(): UseWeather {
   const [weather, setWeather] = useState<WeatherDTO | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const requestRef = useRef<AbortController | null>(null);
-  const onPlaceLabelRef = useRef(onPlaceLabel);
+  const lastQuery = useRef<WeatherQuery | null>(null);
 
-  useEffect(() => {
-    onPlaceLabelRef.current = onPlaceLabel;
-  }, [onPlaceLabel]);
   useEffect(() => () => requestRef.current?.abort(), []);
 
-  const load = useCallback(async (query: WeatherQuery, { labelFromCoords = false } = {}) => {
-    const point = hasCoords(query) ? query : null;
-    if (!point && !query.city) return;
+  const search = useCallback(async (query: WeatherQuery) => {
+    if (!hasCoords(query) && !query.city) return;
+    lastQuery.current = query;
 
     requestRef.current?.abort();
     const controller = new AbortController();
@@ -44,23 +37,8 @@ export default function useWeather({ onPlaceLabel }: Options = {}): UseWeather {
     setLoading(true);
     setError('');
     try {
-      // Map clicks need a place name for the search box; fetch it alongside the weather
-      const placePromise = labelFromCoords && point ? fetchPlace(point.lat, point.lon, signal) : null;
-      placePromise?.catch(() => {}); // avoid an unhandled rejection if the weather call fails first
-
       const data = await getWeather(query, signal);
-      if (signal.aborted) return;
-      setWeather(data);
-
-      if (placePromise && point) {
-        const place = await placePromise;
-        if (signal.aborted) return;
-        onPlaceLabelRef.current?.(
-          place
-            ? [place.name, place.state, place.country].filter(Boolean).join(', ')
-            : `${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`,
-        );
-      }
+      if (!signal.aborted) setWeather(data);
     } catch (err) {
       if ((err as Error).name === 'AbortError' || signal.aborted) return;
       setError(err instanceof TypeError ? OFFLINE_MESSAGE : (err as Error).message);
@@ -69,11 +47,9 @@ export default function useWeather({ onPlaceLabel }: Options = {}): UseWeather {
     }
   }, []);
 
-  const search = useCallback((query: WeatherQuery) => load(query), [load]);
-  const searchPoint = useCallback(
-    (lat: number, lon: number) => load({ lat, lon }, { labelFromCoords: true }),
-    [load],
-  );
+  const retry = useCallback(async () => {
+    if (lastQuery.current) await search(lastQuery.current);
+  }, [search]);
 
-  return { weather, loading, error, search, searchPoint };
+  return { weather, loading, error, search, retry };
 }

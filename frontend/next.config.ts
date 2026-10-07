@@ -6,8 +6,9 @@ const csp = [
   "default-src 'self'",
   `script-src 'self'${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ''}`,
   // React style props and Leaflet's positioning use inline styles
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  // Fonts are self-hosted by next/font
+  "font-src 'self'",
   "img-src 'self' data: blob: https://openweathermap.org https://*.basemaps.cartocdn.com",
   `connect-src 'self'${isDev ? ' ws:' : ''}`,
   "object-src 'none'",

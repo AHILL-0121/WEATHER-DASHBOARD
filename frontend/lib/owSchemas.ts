@@ -6,7 +6,9 @@ import { z } from 'zod';
 export const OwWeatherSchema = z.object({
   name: z.string().default(''),
   coord: z.object({ lat: z.number(), lon: z.number() }),
-  weather: z.array(z.object({ main: z.string(), icon: z.string() })).min(1),
+  weather: z
+    .array(z.object({ main: z.string(), description: z.string().default(''), icon: z.string() }))
+    .min(1),
   main: z.object({
     temp: z.number(),
     feels_like: z.number(),
@@ -15,7 +17,9 @@ export const OwWeatherSchema = z.object({
     humidity: z.number(),
     pressure: z.number(),
   }),
-  wind: z.object({ speed: z.number().optional(), deg: z.number().optional() }).optional(),
+  wind: z
+    .object({ speed: z.number().optional(), deg: z.number().optional(), gust: z.number().optional() })
+    .optional(),
   clouds: z.object({ all: z.number() }).optional(),
   sys: z
     .object({

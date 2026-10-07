@@ -14,6 +14,8 @@ export interface WeatherDTO {
   temp_max: number;
   /** OpenWeather group, e.g. "Clear", "Rain" */
   condition: string;
+  /** Sentence-case detail, e.g. "Broken clouds"; empty if upstream omits it */
+  description: string;
   /** % */
   humidity: number;
   /** hPa */
@@ -22,6 +24,8 @@ export interface WeatherDTO {
   wind_speed?: number;
   /** Degrees the wind comes from */
   wind_deg?: number;
+  /** m/s */
+  wind_gust?: number;
   /** Metres */
   visibility?: number;
   /** Unix seconds, UTC */
