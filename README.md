@@ -19,26 +19,31 @@ A weather dashboard built with **Next.js**. Search for a city or click anywhere 
 frontend/
 ├── components/
 │   ├── scenes/            # Animated background scenes (sun, rain, snow, …) and SceneFX selector
-│   ├── WeatherDisplay.jsx # Current-conditions panel
-│   ├── WeatherForm.jsx    # Search box with suggestions
-│   ├── WeatherMap.jsx     # Leaflet map
-│   ├── Header.jsx, Footer.jsx, PageHead.jsx, ErrorBoundary.jsx
+│   ├── WeatherDisplay.tsx # Current-conditions panel
+│   ├── WeatherForm.tsx    # Search box with suggestions
+│   ├── WeatherMap.tsx     # Leaflet map
+│   ├── Header.tsx, Footer.tsx, PageHead.tsx, ErrorBoundary.tsx
 ├── hooks/
-│   ├── useWeather.js      # Loads weather: cancels stale requests, caches results
-│   └── useNow.js          # Shared once-a-minute clock
+│   ├── useWeather.ts      # Loads weather: cancels stale requests, caches results
+│   └── useNow.ts          # Shared once-a-minute clock
 ├── lib/
-│   ├── openweather.js     # Server-only: validation, rate limit, upstream calls
-│   ├── weatherClient.js   # Browser-side calls to /api, error messages, cache
-│   ├── time.js            # Timezone-safe time and sun maths
-│   └── scene.js           # Condition → background scene
+│   ├── openweather.ts     # Server-only: validation, rate limit, upstream calls
+│   ├── owSchemas.ts       # Server-only: zod schemas for OpenWeather responses
+│   ├── forecast.ts        # Server-only: 3-hour forecast → hourly strip + daily summaries
+│   ├── types.ts           # Response types of our /api routes (shared with the browser)
+│   ├── weatherClient.ts   # Browser-side calls to /api, error messages, cache
+│   ├── time.ts            # Timezone-safe time and sun maths
+│   └── scene.ts           # Condition → background scene
 ├── pages/
-│   ├── index.jsx          # Dashboard
-│   ├── 404.jsx
+│   ├── index.tsx          # Dashboard
+│   ├── 404.tsx
 │   └── api/
-│       ├── weather.js         # GET /api/weather?city= | ?lat=&lon=
+│       ├── weather.ts         # GET /api/weather?city= | ?lat=&lon=
+│       ├── forecast.ts        # GET /api/forecast?lat=&lon=  (next 24 h + daily)
+│       ├── air.ts             # GET /api/air?lat=&lon=       (air quality index)
 │       └── geocode/
-│           ├── index.js       # GET /api/geocode?q=        (search suggestions)
-│           └── reverse.js     # GET /api/geocode/reverse?lat=&lon=  (map-click names)
+│           ├── index.ts       # GET /api/geocode?q=        (search suggestions)
+│           └── reverse.ts     # GET /api/geocode/reverse?lat=&lon=  (map-click names)
 ├── styles/                # Global CSS
 ├── test/                  # API tests and helpers
 └── .env.example           # Environment variables template
@@ -86,8 +91,10 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, tests, build and `npm a
 ```
 Browser
   ├─ GET /api/weather?city=London          ─┐
-  ├─ GET /api/geocode?q=Lon                 ├─ Next.js API routes (validate input, rate-limit,
-  └─ GET /api/geocode/reverse?lat=&lon=    ─┘   add the API key, cache for 5 min)
+  ├─ GET /api/forecast?lat=&lon=            │
+  ├─ GET /api/air?lat=&lon=                 ├─ Next.js API routes (validate input, rate-limit,
+  ├─ GET /api/geocode?q=Lon                 │   add the API key, cache for 5 min)
+  └─ GET /api/geocode/reverse?lat=&lon=    ─┘
                                                    └─ api.openweathermap.org
 ```
 
