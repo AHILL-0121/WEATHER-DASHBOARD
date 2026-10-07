@@ -149,3 +149,8 @@ export function sendError(res: NextApiResponse<ApiErrorDTO>, err: unknown): void
 export function toPlace(p: OwPlace): PlaceDTO {
   return { name: p.name, state: p.state, country: p.country, lat: p.lat, lon: p.lon };
 }
+
+/** Absolute URL of an OpenWeather condition icon, e.g. "04d" */
+export function iconUrl(code: string): string {
+  return `https://openweathermap.org/img/wn/${code}@2x.png`;
+}

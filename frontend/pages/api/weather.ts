@@ -1,5 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { guard, owFetch, parseLatLon, parseQuery, sendCached, sendError } from '../../lib/openweather';
+import {
+  guard,
+  iconUrl,
+  owFetch,
+  parseLatLon,
+  parseQuery,
+  sendCached,
+  sendError,
+} from '../../lib/openweather';
 import { OwWeatherSchema } from '../../lib/owSchemas';
 import type { ApiErrorDTO, WeatherDTO } from '../../lib/types';
 
@@ -40,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       sunrise: data.sys?.sunrise,
       sunset: data.sys?.sunset,
       clouds: data.clouds?.all,
-      icon: `https://openweathermap.org/img/wn/${current!.icon}@2x.png`,
+      icon: iconUrl(current!.icon),
       timezone: data.timezone,
     });
   } catch (err) {
