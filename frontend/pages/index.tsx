@@ -117,7 +117,16 @@ export default function Home() {
   const hours = forecast.data ? upcoming(forecast.data, now) : [];
   const summary = weather && hours.length ? heroSummary(weather, hours, units) : null;
   const kind = weather ? conditionKind(weather) : null;
-  const name = current?.name || weather?.city || 'Unnamed location';
+  // The weather on screen may still be an earlier place's (loading, or a
+  // failed refresh), so only use the selected place's name when it matches
+  const shownPlace =
+    current &&
+    weather &&
+    Math.abs(current.lat - weather.lat) < 0.05 &&
+    Math.abs(current.lon - weather.lon) < 0.05
+      ? current
+      : null;
+  const name = shownPlace?.name || weather?.city || 'Unnamed location';
   const message = error || notice;
 
   return (
@@ -195,7 +204,7 @@ export default function Home() {
                 <>
                   <Hero
                     weather={weather}
-                    place={current}
+                    place={shownPlace}
                     units={units}
                     night={night}
                     now={now}

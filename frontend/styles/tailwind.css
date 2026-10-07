@@ -29,12 +29,13 @@
   --ci-text: #0d1726;
   --ci-text-2: #3d4a5c;
   --ci-muted: #5f6c7d;
-  --ci-faint: #7d8898;
+  /* Darker than the prototype (#7d8898) to reach 4.5:1 on every light surface (A11Y-02) */
+  --ci-faint: #636e7f;
   --ci-accent: #1d5fd1;
   --ci-on-accent: #ffffff;
   --ci-accent-soft: rgb(29 95 209 / 0.09);
   --ci-danger: #c4322b;
-  --ci-rain: #2a78d4;
+  --ci-rain: #1f6bc4; /* was #2a78d4: 3.9:1 on the page background */
   --ci-track: #e7ebf0;
   --ci-shadow: 0 1px 2px rgb(13 23 38 / 0.05), 0 4px 16px -8px rgb(13 23 38 / 0.08);
 }
