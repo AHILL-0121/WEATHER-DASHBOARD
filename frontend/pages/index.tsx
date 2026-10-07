@@ -262,7 +262,7 @@ export default function Home() {
                     Map
                   </h2>
                   <p className="m-0 text-[13px] text-muted-foreground">
-                    Click to check another spot. Search works from the keyboard.
+                    Click to check another spot. Pinch or Ctrl + scroll to zoom.
                   </p>
                 </div>
                 <div className="mt-3.5 border-t border-border bg-surface-2">

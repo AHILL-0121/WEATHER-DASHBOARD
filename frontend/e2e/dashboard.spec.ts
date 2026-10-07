@@ -109,6 +109,42 @@ test.describe('dashboard', () => {
     await expect(tile).toHaveAttribute('src', /\/maps\/dataviz-dark\/256\//);
   });
 
+  test('pinch or Ctrl + scroll zooms the map, not the page; plain scroll scrolls the page', async ({
+    page,
+  }) => {
+    test.skip(test.info().project.name === 'mobile', 'Wheel and trackpad gestures are desktop only');
+    await page.goto('/');
+    const map = page.locator('.leaflet-container');
+    await map.scrollIntoViewIfNeeded();
+    const tileZoom = async () =>
+      Number(
+        /\/256\/(\d+)\//.exec((await map.locator('img.leaflet-tile').last().getAttribute('src')) ?? '')?.[1],
+      );
+    test.skip(
+      await page.getByText('Map tiles need NEXT_PUBLIC_MAPTILER_KEY').isVisible(),
+      'Built without a MapTiler key',
+    );
+    await expect.poll(tileZoom).toBe(4);
+    const box = (await map.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+    // A trackpad pinch reaches the page as ctrl+wheel; the browser must not get it
+    const pageZoomBlocked = await map.evaluate((el) => {
+      const e = new WheelEvent('wheel', { deltaY: -120, ctrlKey: true, bubbles: true, cancelable: true });
+      el.dispatchEvent(e);
+      return e.defaultPrevented;
+    });
+    expect(pageZoomBlocked).toBe(true);
+    await expect.poll(tileZoom).toBe(6); // 120 / 60 per level
+
+    // Plain scrolling still scrolls the page (up: the map is at the bottom) and shows the hint
+    const before = await page.evaluate(() => scrollY);
+    await page.mouse.wheel(0, -200);
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(before);
+    await expect(page.getByText('Pinch, or hold Ctrl and scroll, to zoom the map')).toHaveCSS('opacity', '1');
+    expect(await tileZoom()).toBe(6);
+  });
+
   test('keeps the last weather, under its own name, on a failed load and retries', async ({ page }) => {
     let fail = false;
     await page.route('**/api/weather**', (route) =>

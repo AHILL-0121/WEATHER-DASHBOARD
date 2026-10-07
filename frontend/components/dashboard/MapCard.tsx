@@ -55,6 +55,84 @@ function Controller({ lat, lon, onPick }: Omit<Props, 'theme'>) {
   return <Marker position={pos} icon={pin} keyboard={false} />;
 }
 
+// Wheel delta that counts as one zoom level. A mouse notch is about 100; a
+// trackpad pinch sends many small deltas, so they're added up.
+const WHEEL_PER_ZOOM = 60;
+const HINT_MS = 1500;
+
+// Safari reports trackpad pinches as its own gesture events, not ctrl+wheel
+type GestureEvent = Event & { scale: number; clientX: number; clientY: number };
+
+// Map zoom from a pinch or Ctrl/⌘ + scroll, without trapping page scrolling.
+// Plain scroll wheels are left to the page (scrollWheelZoom is off), but a
+// trackpad pinch arrives as ctrl+wheel: unhandled, the browser zooms the whole
+// page instead (UX-03). A plain scroll over the map shows a short hint.
+function GestureZoom() {
+  const map = useMap();
+  const [hint, setHint] = useState(false);
+
+  useEffect(() => {
+    const el = map.getContainer();
+    let total = 0;
+    let idle: ReturnType<typeof setTimeout> | undefined;
+    let hintTimer: ReturnType<typeof setTimeout> | undefined;
+    let gestureStart = map.getZoom();
+
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          setHint(true);
+          clearTimeout(hintTimer);
+          hintTimer = setTimeout(() => setHint(false), HINT_MS);
+        }
+        return; // the page scrolls as usual
+      }
+      e.preventDefault(); // stop the browser zooming the page
+      setHint(false);
+      total += e.deltaMode === WheelEvent.DOM_DELTA_LINE ? e.deltaY * 33 : e.deltaY;
+      clearTimeout(idle);
+      idle = setTimeout(() => (total = 0), 250);
+      const steps = Math.trunc(total / WHEEL_PER_ZOOM);
+      if (!steps) return;
+      total -= steps * WHEEL_PER_ZOOM;
+      map.setZoomAround(map.mouseEventToContainerPoint(e), map.getZoom() - steps);
+    };
+
+    const onGestureStart = (e: Event) => {
+      e.preventDefault();
+      gestureStart = map.getZoom();
+    };
+    const onGestureChange = (e: Event) => {
+      e.preventDefault();
+      const g = e as GestureEvent;
+      const zoom = Math.round(gestureStart + Math.log2(g.scale));
+      if (zoom !== map.getZoom()) {
+        map.setZoomAround(map.mouseEventToContainerPoint(g as unknown as MouseEvent), zoom);
+      }
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    el.addEventListener('gesturestart', onGestureStart);
+    el.addEventListener('gesturechange', onGestureChange);
+    return () => {
+      clearTimeout(idle);
+      clearTimeout(hintTimer);
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('gesturestart', onGestureStart);
+      el.removeEventListener('gesturechange', onGestureChange);
+    };
+  }, [map]);
+
+  return (
+    <p
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-0 z-[450] m-0 grid place-items-center bg-[rgb(8_12_20/0.45)] text-sm font-medium text-white transition-opacity duration-150 ${hint ? 'opacity-100' : 'opacity-0'}`}
+    >
+      Pinch, or hold Ctrl and scroll, to zoom the map
+    </p>
+  );
+}
+
 export default function MapCard({ lat, lon, theme, onPick }: Props) {
   // Read once: Leaflet only takes animation options at creation. Client-only
   // component (loaded with ssr: false), so window is always defined here.
@@ -80,6 +158,7 @@ export default function MapCard({ lat, lon, theme, onPick }: Props) {
         </p>
       )}
       <Controller lat={lat} lon={lon} onPick={onPick} />
+      <GestureZoom />
       {MAPTILER_KEY && (
         // MapTiler's free plan asks for its logo on the map
         <a
