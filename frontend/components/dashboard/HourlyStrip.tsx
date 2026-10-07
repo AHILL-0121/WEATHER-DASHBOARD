@@ -232,7 +232,7 @@ export default function HourlyStrip({
                 className={cn(
                   'font-mono text-xs text-muted-foreground',
                   c.now && 'font-medium text-foreground',
-                  c.sunEvent && 'text-[#b5690a] dark:text-[#f0a24a]',
+                  c.sunEvent && 'text-[#9a5a06] dark:text-[#f0a24a]',
                 )}
               >
                 {c.now ? 'Now' : (c.sunEvent ?? String(localHour(c.time, tz)).padStart(2, '0'))}

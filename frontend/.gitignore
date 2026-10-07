@@ -22,3 +22,6 @@ npm-debug.log*
 next-env.d.ts
 # Test coverage output
 coverage/
+# Playwright output
+playwright-report/
+test-results/
