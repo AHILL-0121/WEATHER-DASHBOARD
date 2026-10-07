@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { useState } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CommandSearch from './CommandSearch';
 import { clearCache } from '@/lib/weatherClient';
@@ -9,6 +9,9 @@ import type { PlaceDTO } from '@/lib/types';
 
 afterEach(cleanup);
 beforeEach(clearCache);
+// The dialog is loaded on demand; compile it once up front so the first test
+// isn't waiting on a cold import
+beforeAll(() => import('./SearchDialog'));
 
 const PARIS: PlaceDTO = { name: 'Paris', country: 'FR', lat: 48.85, lon: 2.35 };
 const PARIS_TX: PlaceDTO = { name: 'Paris', state: 'Texas', country: 'US', lat: 33.66, lon: -95.56 };
@@ -41,7 +44,7 @@ describe('CommandSearch', () => {
     );
     const user = userEvent.setup();
     render(<Harness />);
-    const input = screen.getByRole('combobox', { name: 'Search a city' });
+    const input = await screen.findByRole('combobox', { name: 'Search a city' });
 
     await user.type(input, 'Par');
     await screen.findByText('Texas, United States');
@@ -61,7 +64,7 @@ describe('CommandSearch', () => {
     const user = userEvent.setup();
     render(<Harness recent={[ROME]} />);
 
-    const options = screen.getAllByRole('option');
+    const options = await screen.findAllByRole('option');
     expect(options.map((o) => o.textContent)).toEqual(['Use my current location', 'Rome Italy']);
 
     await user.keyboard('{Enter}');
@@ -77,7 +80,7 @@ describe('CommandSearch', () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    await user.type(screen.getByRole('combobox'), 'Atlantis');
+    await user.type(await screen.findByRole('combobox'), 'Atlantis');
 
     expect(await screen.findByText('No place matches “Atlantis”.')).toBeInTheDocument();
     expect(screen.queryAllByRole('option')).toHaveLength(0);
@@ -91,7 +94,7 @@ describe('CommandSearch', () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    await user.type(screen.getByRole('combobox'), 'Rome');
+    await user.type(await screen.findByRole('combobox'), 'Rome');
 
     expect(await screen.findByText(/Search isn't available/)).toBeInTheDocument();
   });
@@ -103,8 +106,8 @@ describe('CommandSearch', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     await user.keyboard('{Control>}k{/Control}');
-    expect(screen.getByRole('dialog', { name: 'Search places' })).toBeInTheDocument();
-    expect(screen.getByRole('combobox')).toHaveFocus();
+    expect(await screen.findByRole('dialog', { name: 'Search places' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('combobox')).toHaveFocus());
 
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -126,7 +129,7 @@ describe('CommandSearch', () => {
       );
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
       render(<Harness />);
-      const input = screen.getByRole('combobox');
+      const input = await screen.findByRole('combobox');
 
       await user.type(input, 'Lo');
       await act(() => vi.advanceTimersByTimeAsync(300)); // debounce → request 1 ("Lo")

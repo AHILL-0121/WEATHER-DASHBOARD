@@ -189,6 +189,34 @@ test.describe('dashboard', () => {
     await expect(radios.last()).toBeFocused();
   });
 
+  test('nothing jumps while the data loads (CLS < 0.1)', async ({ page }) => {
+    // Sum the page's layout shifts, as Lighthouse's CLS does
+    await page.addInitScript(() => {
+      const w = window as unknown as { __cls: number };
+      w.__cls = 0;
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) {
+          if (!e.hadRecentInput) w.__cls += e.value;
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+    // Answer in a realistic order: weather first, then forecast, then air quality
+    const delays: Record<string, number> = { '/api/weather': 300, '/api/forecast': 900, '/api/air': 1200 };
+    await page.route('**/api/**', async (route) => {
+      const delay = delays[new URL(route.request().url()).pathname];
+      if (delay) await new Promise((r) => setTimeout(r, delay));
+      await route.fallback();
+    });
+
+    await page.goto('/');
+    await expect(page.getByRole('radiogroup', { name: 'Next 24 hours' })).toBeVisible();
+    await expect(page.getByText('Fair')).toBeVisible();
+    await page.waitForTimeout(500); // let any late shift be recorded
+    const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+    console.log(test.info().project.name, 'CLS', cls.toFixed(3));
+    expect(cls).toBeLessThan(0.1);
+  });
+
   test('never scrolls sideways', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('radiogroup', { name: 'Next 24 hours' })).toBeVisible();
