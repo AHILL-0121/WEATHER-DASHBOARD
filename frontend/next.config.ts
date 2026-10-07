@@ -5,7 +5,6 @@ const isDev = process.env.NODE_ENV !== 'production';
 // `next start` never hydrated. The e2e suite fails on any CSP violation.
 //
 // Every external origin the browser talks to must be listed here.
-// When the MapTiler switch lands (UX-11), add https://api.maptiler.com to img-src.
 const csp = [
   "default-src 'self'",
   `script-src 'self'${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ''}`,
@@ -13,7 +12,8 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   // Fonts are self-hosted by next/font
   "font-src 'self'",
-  "img-src 'self' data: blob: https://openweathermap.org https://*.basemaps.cartocdn.com",
+  // Map tiles (MapTiler) and OpenWeather condition icons
+  "img-src 'self' data: blob: https://openweathermap.org https://api.maptiler.com",
   `connect-src 'self'${isDev ? ' ws:' : ''}`,
   "object-src 'none'",
   "base-uri 'self'",

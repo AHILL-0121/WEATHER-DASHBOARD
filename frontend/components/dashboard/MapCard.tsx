@@ -3,13 +3,15 @@ import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-lea
 import L from 'leaflet';
 import type { LatLngTuple } from 'leaflet';
 
-// Keyless CARTO tiles until the MapTiler switch (UX-11)
-const TILES = {
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-};
+// MapTiler's muted "Dataviz" styles (UX-11). The key is public by design: it
+// ships to the browser and is locked to our domains in the MapTiler dashboard.
+const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY ?? '';
+const STYLE = { light: 'dataviz', dark: 'dataviz-dark' };
+// {r} becomes "@2x" on high-density screens
+const tileUrl = (theme: 'light' | 'dark') =>
+  `https://api.maptiler.com/maps/${STYLE[theme]}/256/{z}/{x}/{y}{r}.png?key=${MAPTILER_KEY}`;
 const ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  '<a href="https://www.maptiler.com/copyright/" target="_blank" rel="noopener">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>';
 
 const pin = L.divIcon({
   className: '',
@@ -69,9 +71,31 @@ export default function MapCard({ lat, lon, theme, onPick }: Props) {
       markerZoomAnimation={!reducedMotion}
       className="h-[360px] w-full"
     >
-      {/* key: swap the layer outright when the theme changes */}
-      <TileLayer key={theme} url={TILES[theme]} attribution={ATTRIBUTION} maxZoom={18} />
+      {MAPTILER_KEY ? (
+        // key: swap the layer outright when the theme changes
+        <TileLayer key={theme} url={tileUrl(theme)} attribution={ATTRIBUTION} maxZoom={18} />
+      ) : (
+        <p className="absolute inset-x-0 top-3 z-[400] m-0 text-center text-xs text-muted-foreground">
+          Map tiles need NEXT_PUBLIC_MAPTILER_KEY. Clicking still loads weather.
+        </p>
+      )}
       <Controller lat={lat} lon={lon} onPick={onPick} />
+      {MAPTILER_KEY && (
+        // MapTiler's free plan asks for its logo on the map
+        <a
+          href="https://www.maptiler.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute bottom-1.5 left-2 z-[400] block"
+          // Leaflet listens on the map element itself: without this, clicking
+          // the logo would also load the weather under it
+          ref={(el) => {
+            if (el) L.DomEvent.disableClickPropagation(el);
+          }}
+        >
+          <img src="/maptiler-logo.svg" alt="MapTiler" width={67} height={20} />
+        </a>
+      )}
     </MapContainer>
   );
 }

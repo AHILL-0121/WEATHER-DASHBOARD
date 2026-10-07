@@ -83,6 +83,8 @@ jobs:
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
+          # Tiles are mocked in the tests; any value turns the tile layer on
+          NEXT_PUBLIC_MAPTILER_KEY: e2e-placeholder
       # Browser /api calls are mocked, so no OpenWeather key is needed
       - run: npm run e2e
       - uses: actions/upload-artifact@v4
