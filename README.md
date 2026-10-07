@@ -80,9 +80,11 @@ Run these from `frontend/`:
 | `npm run lint` | ESLint (Next.js core-web-vitals rules) |
 | `npm run format` | Format with Prettier (`format:check` only reports) |
 | `npm test` | Run the Vitest suite once (`test:watch` to re-run on save) |
-| `npm run build` | Production build |
+| `npm run typecheck` | TypeScript check |
+| `npm run build` | Production build (webpack; Turbopack's build output conflicts with the CSP) |
+| `npm run e2e` | Playwright end-to-end + axe accessibility tests against the build (run `npm run build` first) |
 
-CI (`.github/workflows/ci.yml`) runs lint, format check, tests, build and `npm audit --omit=dev` on every pull request and push to `main`.
+CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, unit tests, build, the e2e suite and `npm audit --omit=dev` on every pull request and push to `main`.
 
 ## Deployment (Vercel)
 

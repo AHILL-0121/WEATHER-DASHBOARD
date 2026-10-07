@@ -14,10 +14,6 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'retain-on-failure',
-    // A local `next start` build inlines Turbopack's bootstrap script, which
-    // our CSP (script-src 'self') blocks, so the app never hydrates. Vercel
-    // serves that script as a file and is unaffected. See plan item SEC-05.
-    bypassCSP: true,
     // Locally, use the installed Chrome instead of downloading Chromium
     channel: process.env.CI ? undefined : 'chrome',
   },

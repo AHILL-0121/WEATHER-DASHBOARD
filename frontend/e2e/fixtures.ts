@@ -1,6 +1,6 @@
 // Sample API responses for the end-to-end tests. The clock is fixed, so every
 // run sees the same times: 09:00 UTC on 7 October 2026.
-import { test as base, type Page, type Route } from '@playwright/test';
+import { expect, test as base, type Page, type Route } from '@playwright/test';
 import type { AirDTO, ForecastDTO, ForecastHourDTO, PlaceDTO, WeatherDTO } from '../lib/types';
 
 export const NOW = Date.UTC(2026, 9, 7, 9) / 1000;
@@ -126,12 +126,19 @@ export async function mockApi(page: Page, override?: (route: Route, url: URL) =>
 }
 
 /** A test with the clock fixed and the API mocked */
+// Every test also fails on a Content-Security-Policy violation, so the real
+// CSP from next.config.ts is exercised on every page state (SEC-05)
 export const test = base.extend({
   page: async ({ page }, provide) => {
+    const violations: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error' && /Content Security Policy/i.test(msg.text())) violations.push(msg.text());
+    });
     await page.clock.setFixedTime(new Date(NOW * 1000));
     await mockApi(page);
     await provide(page);
+    expect(violations, 'CSP violations').toEqual([]);
   },
 });
 
-export { expect } from '@playwright/test';
+export { expect };

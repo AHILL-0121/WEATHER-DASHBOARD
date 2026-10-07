@@ -1,5 +1,9 @@
 const isDev = process.env.NODE_ENV !== 'production';
 
+// Production builds use webpack (`npm run build`): Turbopack's build inlines a
+// bootstrap <script> that `script-src 'self'` blocks, so a self-hosted
+// `next start` never hydrated. The e2e suite fails on any CSP violation.
+//
 // Every external origin the browser talks to must be listed here.
 // When the MapTiler switch lands (UX-11), add https://api.maptiler.com to img-src.
 const csp = [
