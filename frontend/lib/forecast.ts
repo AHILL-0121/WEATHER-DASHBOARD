@@ -26,6 +26,7 @@ function toHour(e: OwForecastEntry): ForecastHourDTO {
     icon: iconUrl(w!.icon),
     pop: toPercent(e.pop),
     wind_speed: e.wind?.speed,
+    pressure: e.main.pressure,
   };
 }
 
@@ -42,6 +43,7 @@ function toDay(date: string, entries: { e: OwForecastEntry; secOfDay: number }[]
     condition: w!.main,
     icon: iconUrl(w!.icon),
     pop: toPercent(Math.max(...entries.map(({ e }) => e.pop))),
+    steps: entries.map(({ e }) => toHour(e)),
   };
 }
 

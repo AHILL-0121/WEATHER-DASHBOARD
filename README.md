@@ -18,13 +18,14 @@ A weather dashboard built with **Next.js**. Search for a city or click anywhere 
 ```
 frontend/
 ├── components/
-│   ├── dashboard/         # Sidebar, CommandSearch, Hero, WeatherArt, DetailPanels, MapCard, …
+│   ├── dashboard/         # Sidebar, CommandSearch, Hero, HourlyStrip, WeekList, DetailPanels, MapCard, …
 │   ├── ui/                # shadcn/ui primitives (dialog)
 │   ├── PageHead.tsx, ErrorBoundary.tsx
 ├── hooks/
 │   ├── useWeather.ts      # Loads weather: cancels stale requests, keeps the last good result
 │   ├── usePlaces.ts       # Saved, recent and current places (localStorage)
 │   ├── usePrefs.ts        # Units and theme
+│   ├── usePointData.ts    # Forecast and air quality for the current place
 │   └── useNow.ts          # Shared once-a-minute clock
 ├── lib/
 │   ├── openweather.ts     # Server-only: validation, rate limit, upstream calls
@@ -35,6 +36,7 @@ frontend/
 │   ├── time.ts            # Timezone-safe time and sun maths
 │   ├── condition.ts       # OpenWeather condition → one of seven looks
 │   ├── units.ts           # °C/°F, km/h/mph, dew point, compass
+│   ├── summary.ts         # Plain-language outlook, pressure trend, day names
 │   └── tempColor.ts       # Temperature colour scale
 ├── pages/
 │   ├── index.tsx          # Dashboard

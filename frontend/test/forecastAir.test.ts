@@ -10,7 +10,7 @@ const IST = 19800; // UTC+5:30, so local days don't line up with UTC days
 // steps 0–6 fall on 2026-10-07 and steps 7–9 on 2026-10-08.
 const STEPS = Array.from({ length: 10 }, (_, i) => ({
   dt: BASE + i * 3 * 3600,
-  main: { temp: 10 + i, temp_min: 9 + i, temp_max: 11 + i },
+  main: { temp: 10 + i, temp_min: 9 + i, temp_max: 11 + i, pressure: 1010 - i },
   weather: [
     i === 2
       ? { main: 'Rain', icon: '10d' }
@@ -56,6 +56,7 @@ describe('/api/forecast (UX-01)', () => {
       icon: 'https://openweathermap.org/img/wn/04d@2x.png',
       pop: 0,
       wind_speed: 2,
+      pressure: 1010,
     });
     expect(body.hourly[4].pop).toBe(35);
   });
@@ -72,6 +73,7 @@ describe('/api/forecast (UX-01)', () => {
         condition: 'Rain',
         icon: expect.stringContaining('10d'),
         pop: 35,
+        steps: expect.any(Array),
       },
       // Steps 7–9; step 9 (08:30 local) is nearest noon
       {
@@ -81,8 +83,14 @@ describe('/api/forecast (UX-01)', () => {
         condition: 'Clear',
         icon: expect.stringContaining('01d'),
         pop: 0,
+        steps: expect.any(Array),
       },
     ]);
+    // Each day carries its own steps, in order
+    expect(body.daily[0].steps.map((h: { time: number }) => h.time)).toEqual(
+      STEPS.slice(0, 7).map((s) => s.dt),
+    );
+    expect(body.daily[1].steps).toHaveLength(3);
   });
 
   it('sorts steps that arrive out of order', async () => {

@@ -29,6 +29,9 @@ export const OwWeatherSchema = z.object({
     })
     .optional(),
   visibility: z.number().optional(),
+  // Only present when it has rained or snowed in the last hour
+  rain: z.object({ '1h': z.number().optional() }).optional(),
+  snow: z.object({ '1h': z.number().optional() }).optional(),
   timezone: z.number().default(0),
 });
 
@@ -51,7 +54,12 @@ export const OwForecastSchema = z.object({
     .array(
       z.object({
         dt: z.number(),
-        main: z.object({ temp: z.number(), temp_min: z.number(), temp_max: z.number() }),
+        main: z.object({
+          temp: z.number(),
+          temp_min: z.number(),
+          temp_max: z.number(),
+          pressure: z.number().optional(),
+        }),
         weather: z.array(z.object({ main: z.string(), icon: z.string() })).min(1),
         wind: z.object({ speed: z.number().optional() }).optional(),
         // Probability of precipitation, 0–1

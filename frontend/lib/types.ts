@@ -31,6 +31,8 @@ export interface WeatherDTO {
   /** Unix seconds, UTC */
   sunrise?: number;
   sunset?: number;
+  /** Rain plus snow in the last hour, mm; 0 when none was reported */
+  precip_1h: number;
   /** Cloud cover % */
   clouds?: number;
   /** Absolute URL of the condition icon; ends in d@2x.png or n@2x.png */
@@ -71,6 +73,8 @@ export interface ForecastHourDTO {
   pop: number;
   /** m/s */
   wind_speed?: number;
+  /** hPa */
+  pressure?: number;
 }
 
 /** One local calendar day of GET /api/forecast */
@@ -85,6 +89,8 @@ export interface ForecastDayDTO {
   icon: string;
   /** Highest chance of precipitation that day, 0–100 % */
   pop: number;
+  /** That day's 3-hour steps, for the expanded day view */
+  steps: ForecastHourDTO[];
 }
 
 /** GET /api/forecast */
