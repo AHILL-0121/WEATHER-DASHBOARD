@@ -189,33 +189,39 @@ test.describe('dashboard', () => {
     await expect(radios.last()).toBeFocused();
   });
 
-  test('nothing jumps while the data loads (CLS < 0.1)', async ({ page }) => {
-    // Sum the page's layout shifts, as Lighthouse's CLS does
-    await page.addInitScript(() => {
-      const w = window as unknown as { __cls: number };
-      w.__cls = 0;
-      new PerformanceObserver((list) => {
-        for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) {
-          if (!e.hadRecentInput) w.__cls += e.value;
-        }
-      }).observe({ type: 'layout-shift', buffered: true });
-    });
-    // Answer in a realistic order: weather first, then forecast, then air quality
-    const delays: Record<string, number> = { '/api/weather': 300, '/api/forecast': 900, '/api/air': 1200 };
-    await page.route('**/api/**', async (route) => {
-      const delay = delays[new URL(route.request().url()).pathname];
-      if (delay) await new Promise((r) => setTimeout(r, delay));
-      await route.fallback();
-    });
+  // Real responses arrive in either order; both must keep the layout still
+  for (const [order, delays] of [
+    ['weather first', { '/api/weather': 300, '/api/forecast': 900, '/api/air': 1200 }],
+    ['forecast first', { '/api/weather': 900, '/api/forecast': 300, '/api/air': 600 }],
+  ] as const) {
+    test(`nothing jumps while the data loads, ${order} (CLS < 0.02)`, async ({ page }) => {
+      // Sum the page's layout shifts, as Lighthouse's CLS does
+      await page.addInitScript(() => {
+        const w = window as unknown as { __cls: number };
+        w.__cls = 0;
+        new PerformanceObserver((list) => {
+          for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) {
+            if (!e.hadRecentInput) w.__cls += e.value;
+          }
+        }).observe({ type: 'layout-shift', buffered: true });
+      });
+      await page.route('**/api/**', async (route) => {
+        const delay = (delays as Record<string, number>)[new URL(route.request().url()).pathname];
+        if (delay) await new Promise((r) => setTimeout(r, delay));
+        await route.fallback();
+      });
 
-    await page.goto('/');
-    await expect(page.getByRole('radiogroup', { name: 'Next 24 hours' })).toBeVisible();
-    await expect(page.getByText('Fair')).toBeVisible();
-    await page.waitForTimeout(500); // let any late shift be recorded
-    const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
-    console.log(test.info().project.name, 'CLS', cls.toFixed(3));
-    expect(cls).toBeLessThan(0.1);
-  });
+      await page.goto('/');
+      await expect(page.getByRole('radiogroup', { name: 'Next 24 hours' })).toBeVisible();
+      await expect(page.getByText('Fair')).toBeVisible();
+      await page.waitForTimeout(500); // let any late shift be recorded
+      const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+      console.log(test.info().project.name, 'CLS', cls.toFixed(3));
+      // Google's "good" line is 0.1; a stable page measures ~0, so 0.02 catches
+      // regressions that would still squeak under 0.1 here (e.g. 0.08)
+      expect(cls).toBeLessThan(0.02);
+    });
+  }
 
   test('never scrolls sideways', async ({ page }) => {
     await page.goto('/');
