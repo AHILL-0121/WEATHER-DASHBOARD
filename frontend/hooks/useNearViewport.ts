@@ -9,8 +9,9 @@ export default function useNearViewport(ref: RefObject<Element | null>, margin =
     const el = ref.current;
     if (near || !el) return;
     if (!('IntersectionObserver' in window)) {
-      setNear(true); // very old browsers: just load it
-      return;
+      // Very old browsers: just load it, right after this render
+      const id = setTimeout(() => setNear(true));
+      return () => clearTimeout(id);
     }
     const io = new IntersectionObserver(
       (entries) => {
