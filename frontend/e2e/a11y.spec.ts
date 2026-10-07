@@ -27,6 +27,9 @@ async function ready(page: Page) {
 }
 
 test.describe('accessibility (axe)', () => {
+  // A full axe scan is heavy; two in one test can pass 30 s on a busy machine
+  test.describe.configure({ timeout: 60_000 });
+
   test('light theme', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/');
