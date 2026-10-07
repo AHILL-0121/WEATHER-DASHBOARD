@@ -246,7 +246,8 @@ export default function Home() {
                 {weather && forecast.data && forecast.data.daily.length > 0 ? (
                   <WeekList forecast={forecast.data} currentTemp={weather.temp} units={units} now={now} />
                 ) : (
-                  forecastPending && <Placeholder className="h-[312px]" />
+                  // The forecast can land before the weather; hold the column until both are in
+                  (forecastPending || !weather) && <Placeholder className="h-[312px]" />
                 )}
                 <div
                   className={cn(!forecastPending && !forecast.data?.daily.length && 'min-[960px]:col-span-2')}
