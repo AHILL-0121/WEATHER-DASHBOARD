@@ -98,6 +98,12 @@ function forecastFor(w: WeatherDTO): ForecastDTO {
 
 const AIR: AirDTO = { aqi: 2, time: NOW, components: { pm2_5: 9.4, pm10: 15 } };
 
+// 1×1 transparent PNG, served for every map tile so tests stay offline
+const BLANK_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+);
+
 const json = (route: Route, body: unknown, status = 200) =>
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 
@@ -136,6 +142,9 @@ export const test = base.extend({
     });
     await page.clock.setFixedTime(new Date(NOW * 1000));
     await mockApi(page);
+    await page.route('https://api.maptiler.com/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'image/png', body: BLANK_PNG }),
+    );
     await provide(page);
     expect(violations, 'CSP violations').toEqual([]);
   },

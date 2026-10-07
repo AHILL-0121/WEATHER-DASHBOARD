@@ -69,6 +69,7 @@ Open <http://localhost:3000>. Get a free API key at <https://openweathermap.org/
 | Variable | Required | Purpose |
 |---|---|---|
 | `OPENWEATHER_API_KEY` | Yes | Used only by the `/api` routes, never sent to the browser. Don't create a `NEXT_PUBLIC_` copy. |
+| `NEXT_PUBLIC_MAPTILER_KEY` | For map tiles | Sent to the browser, so restrict it to your domains in the MapTiler dashboard. Set it for Production **and** Preview on Vercel; it's read at build time. |
 | `SITE_URL` | No | Absolute URL for social-preview links. Defaults to the Vercel production domain, or `http://localhost:3000`. |
 
 ## Development
@@ -89,7 +90,7 @@ CI (`.github/workflows/ci.yml`) runs lint, format check, typecheck, unit tests, 
 ## Deployment (Vercel)
 
 1. Import the repository in Vercel and set the **Root Directory** to `frontend`.
-2. Add `OPENWEATHER_API_KEY` under Project → Settings → Environment Variables.
+2. Add `OPENWEATHER_API_KEY` and `NEXT_PUBLIC_MAPTILER_KEY` under Project → Settings → Environment Variables (Production and Preview).
 3. Deploy. Every pull request gets its own preview URL.
 
 ## How it works

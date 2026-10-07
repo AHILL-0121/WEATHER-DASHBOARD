@@ -91,6 +91,24 @@ test.describe('dashboard', () => {
     await expect(hero(page)).toContainText('France');
   });
 
+  test('map tiles come from MapTiler and follow the theme (UX-11)', async ({ page }) => {
+    await page.goto('/');
+    const map = page.locator('.leaflet-container');
+    await map.scrollIntoViewIfNeeded();
+    test.skip(
+      await page.getByText('Map tiles need NEXT_PUBLIC_MAPTILER_KEY').isVisible(),
+      'Built without a MapTiler key',
+    );
+
+    const tile = map.locator('img.leaflet-tile').first();
+    await expect(tile).toHaveAttribute('src', /^https:\/\/api\.maptiler\.com\/maps\/dataviz\/256\//);
+    await expect(map.getByRole('link', { name: 'MapTiler', exact: true })).toBeVisible();
+    await expect(map.locator('.leaflet-control-attribution')).toContainText('© OpenStreetMap contributors');
+
+    await page.getByRole('button', { name: 'Dark theme' }).click();
+    await expect(tile).toHaveAttribute('src', /\/maps\/dataviz-dark\/256\//);
+  });
+
   test('keeps the last weather, under its own name, on a failed load and retries', async ({ page }) => {
     let fail = false;
     await page.route('**/api/weather**', (route) =>
