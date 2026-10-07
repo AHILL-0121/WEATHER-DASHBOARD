@@ -131,6 +131,15 @@ export async function mockApi(page: Page, override?: (route: Route, url: URL) =>
   });
 }
 
+/** Scrolls to the map card (the map only loads near the viewport) and returns it */
+export async function showMap(page: Page) {
+  await page.getByRole('heading', { name: 'Map', exact: true }).scrollIntoViewIfNeeded();
+  const map = page.locator('.leaflet-container');
+  await map.waitFor();
+  await map.scrollIntoViewIfNeeded();
+  return map;
+}
+
 /** A test with the clock fixed and the API mocked */
 // Every test also fails on a Content-Security-Policy violation, so the real
 // CSP from next.config.ts is exercised on every page state (SEC-05)
