@@ -151,7 +151,8 @@ export default function Home() {
         className={cn(
           'fixed inset-x-0 top-0 z-[100] h-0.5 origin-left bg-primary',
           loading
-            ? 'scale-x-[0.85] opacity-100 transition-transform duration-[600ms] ease-out'
+            ? // motion-policy: exempt (progress indicator: tracks the request, not a UI change)
+              'scale-x-[0.85] opacity-100 transition-transform duration-[600ms] ease-out'
             : 'scale-x-0 opacity-0',
         )}
       />

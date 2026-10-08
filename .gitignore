@@ -8,4 +8,5 @@ Thumbs.db
 # Markdown is local-only except the README and GitHub templates
 *.md
 !README.md
+!DESIGN.md
 !.github/**/*.md
