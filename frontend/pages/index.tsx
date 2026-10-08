@@ -21,7 +21,8 @@ import { CONDITION_LABEL, conditionKind } from '../lib/condition';
 import { isNightAt } from '../lib/time';
 import { toDisplayTemp } from '../lib/units';
 import { heroSummary, upcoming } from '../lib/summary';
-import { fetchPlace, getAir, getForecast } from '../lib/weatherClient';
+import { fetchPlace, getAir, getForecast, searchPlaces } from '../lib/weatherClient';
+import { parsePlaceParams, placeSearch } from '../lib/urlPlace';
 import { cn } from '../lib/utils';
 import type { PlaceDTO } from '../lib/types';
 
@@ -48,18 +49,30 @@ const useHydrated = () =>
 
 export default function Home() {
   const hydrated = useHydrated();
-  const { saved, recent, current, setCurrent, pick, remove } = usePlaces();
+  const { saved, recent, current: storedPlace, setCurrent, pick, remove } = usePlaces();
+  // A link's place (UX-06), read once. The server render has no URL, so it
+  // only takes effect after hydration.
+  const [fromUrl] = useState(() =>
+    typeof window === 'undefined' ? {} : parsePlaceParams(window.location.search),
+  );
+  const [urlPlace, setUrlPlace] = useState<PlaceDTO | null>(fromUrl.place ?? null);
+  const [urlQuery, setUrlQuery] = useState<string | null>(fromUrl.query ?? null);
+  // Shown without replacing the visitor's own remembered place
+  const current = (hydrated && urlPlace) || storedPlace;
+  // Data waits for hydration (so a returning visitor's stored place is known)
+  // and for a ?q= search to resolve, rather than fetching another place first
+  const ready = hydrated && !urlQuery;
   const [units, setUnits] = useUnits();
   const [theme, setTheme] = useTheme();
   const mapTheme = useEffectiveTheme(theme);
   const { weather, loading, error, search, retry } = useWeather();
   const savedWeather = useSavedWeather(hydrated ? saved : []);
   const forecast = usePointData(
-    hydrated ? current?.lat : undefined,
-    hydrated ? current?.lon : undefined,
+    ready ? current?.lat : undefined,
+    ready ? current?.lon : undefined,
     getForecast,
   );
-  const air = usePointData(hydrated ? current?.lat : undefined, hydrated ? current?.lon : undefined, getAir);
+  const air = usePointData(ready ? current?.lat : undefined, ready ? current?.lon : undefined, getAir);
   const now = useNow();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notice, setNotice] = useState('');
@@ -69,17 +82,61 @@ export default function Home() {
   const mapSlot = useRef<HTMLDivElement>(null);
   const mapNear = useNearViewport(mapSlot);
 
-  // Load the current place. Waits for hydration so a returning visitor's
-  // stored place is used, rather than fetching the default first.
   const lat = current?.lat;
   const lon = current?.lon;
   useEffect(() => {
-    if (hydrated && lat !== undefined && lon !== undefined) search({ lat, lon });
-  }, [hydrated, lat, lon, search]);
+    if (ready && lat !== undefined && lon !== undefined) search({ lat, lon });
+  }, [ready, lat, lon, search]);
+
+  // ?q=: show the first match; with none, fall back to the usual place
+  useEffect(() => {
+    if (!urlQuery) return;
+    const controller = new AbortController();
+    searchPlaces(urlQuery, controller.signal)
+      .then(([first]) => {
+        if (first) setUrlPlace(first);
+        else setNotice(`No place called "${urlQuery}" was found.`);
+      })
+      .catch((err: Error) => {
+        if (err.name !== 'AbortError') setNotice(`Couldn't look up "${urlQuery}". ${err.message}`);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setUrlQuery(null);
+      });
+    return () => controller.abort();
+  }, [urlQuery]);
+
+  // A link to an unnamed point gets named like a map click
+  useEffect(() => {
+    if (!urlPlace || urlPlace.name) return;
+    const point = urlPlace;
+    const controller = new AbortController();
+    fetchPlace(point.lat, point.lon, controller.signal)
+      .then((place) => {
+        if (!place) return;
+        const { name, state, country } = place;
+        setUrlPlace((cur) => (cur && samePlace(cur, point) ? { ...point, name, state, country } : cur));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [urlPlace]);
+
+  // Keep the address bar on the place shown, so it can be shared or bookmarked.
+  // replaceState: switching places shouldn't fill the back button's history.
+  useEffect(() => {
+    if (!hydrated || urlQuery || !current) return;
+    const query = placeSearch(current);
+    if (window.location.search !== query) {
+      const { pathname, hash } = window.location;
+      window.history.replaceState(window.history.state, '', `${pathname}${query}${hash}`);
+    }
+  }, [hydrated, urlQuery, current]);
 
   const choose = useCallback(
     (place: PlaceDTO, fromSearch = false) => {
       setNotice('');
+      setUrlPlace(null);
+      setUrlQuery(null);
       labelRequest.current?.abort();
       if (fromSearch) pick(place);
       else setCurrent(place);
